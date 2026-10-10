@@ -1,0 +1,14 @@
+# ===== gh-sync managed start =====
+.git-credentials
+backups/*
+!backups/*.tar.gz
+*.sqlite
+*.sqlite-*
+*.jsonl
+*.jsonl.*
+*.conflict.*
+*.local-conflict.*
+*.peer-conflict.*
+*.local.*
+*.theirs.*
+# ===== gh-sync managed end =====

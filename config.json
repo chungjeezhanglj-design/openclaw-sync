@@ -1,0 +1,28 @@
+{
+  "repo": "https://github.com/chungjeezhanglj-design/openclaw-sync",
+  "branch": "instances/openclawsync",
+  "instanceName": "openclawsync",
+  "include": [
+    "workspace"
+  ],
+  "exclude": [
+    "gh-sync/**",
+    "logs/**",
+    "**/*.log",
+    "**/*.tmp",
+    "**/*.pid",
+    "**/*.sock",
+    "delivery-queue/**",
+    "session-delivery-queue/**",
+    "cron/runs/**",
+    "**/node_modules/**",
+    "**/.git/**"
+  ],
+  "pushDebounceMs": 2000,
+  "pollIntervalSec": 60,
+  "backupIntervalH": 0,
+  "backupRetain": 6,
+  "gitCryptEnabled": false,
+  "syncStrategy": "merge",
+  "gitTimeoutMs": 60000
+}
