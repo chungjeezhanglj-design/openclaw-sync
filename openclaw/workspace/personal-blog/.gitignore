@@ -1,0 +1,111 @@
+# ============================================================================
+# personal-blog / .gitignore
+# ============================================================================
+# 维护者: JackLee · 创建于 2026-09-09 仓库清理
+# 说明: 这个仓库尚未做任何 commit，下面规则将作为「首次 commit」前的基础屏蔽清单
+# ----------------------------------------------------------------------------
+
+# ---------- Dependencies ----------
+node_modules/
+**/node_modules/
+jspm_packages/
+
+# ---------- Build outputs ----------
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+*.tsbuildinfo
+*.js.map
+*.d.ts.map
+
+# ---------- Environment & secrets ----------
+# 重要: 不要提交任何 .env；只允许 .env.example / .env.*.example 入仓
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# ---------- Logs ----------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---------- Database / cache files ----------
+*.db
+*.sqlite
+*.sqlite3
+*.ldb
+
+# ---------- User uploads (二进制 + 大体积 + 个人内容，建议走 NAS 备份) ----------
+uploads/
+**/uploads/
+# 保留目录占位符（可选：创建空 uploads/.gitkeep 以保留文件夹结构）
+!uploads/.gitkeep
+!**/uploads/.gitkeep
+
+# ---------- OS cruft ----------
+.DS_Store
+**/.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---------- IDE ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+*~
+.vscode-test/
+.history/
+
+# ---------- Frontend (Vite / Tailwind / PostCSS) ----------
+.vite/
+*.local
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# ---------- Temp / misc ----------
+.tmp/
+.temp/
+.cache/
+.eslintcache
+*.tmp
+*.temp
+*.orig
+*.rej
+*.pid
+*.seed
+*.pid.lock
+
+# ---------- Backup / archive ----------
+*.bak
+*.backup
+*.old
+*.tar.gz
+*.tgz
+*.zip
+
+# ---------- Coverage / test artifacts ----------
+coverage/
+.nyc_output/
+*.lcov
+
+# ---------- Known dev artifacts (本仓库特定) ----------
+# 早期误生成的 hash 文件
+/[a-f0-9]{32}.txt
+/[a-f0-9]{32,40}.txt

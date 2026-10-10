@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "tavily-api": {
+      "command": "node",
+      "args": [
+        "/Users/zhanglj/.mcporter/tavily-mcp-stdio.js"
+      ]
+    },
+    "exa": {
+      "baseUrl": "https://mcp.exa.ai/mcp"
+    },
+    "wecom-doc": {
+      "baseUrl": "https://qyapi.weixin.qq.com/mcp/robot-doc?apikey=793aS7iZ09u9TwbJyye7fLgKB-kryjrBVsoX-xqIrDeDjC-6QEqQYmRBY05gJdvuX9J1dNALPPmGPb3dqmKgwg"
+    }
+  },
+  "imports": []
+}

@@ -1,0 +1,14 @@
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L5] User: 微软Mage-VL 4B开源地址：主模型https://huggingface.co/microsoft/Mage-VL，GitHub代码库https://github.com/microsoft/Mage。注：仅限研究用途。
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L6] Assistant: 收到，立刻抓取两个页面。
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L9] Assistant: GitHub仓库拿到了，但HF主模型卡超时，我读一下spill日志看有没有备用内容。
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L12] Assistant: 📌 **TL;DR** 微软一口气开了 4B 多模态双胞胎：**Mage-VL（理解）+ Mage-Flow（生成/编辑）**。统一仓库、轻量研究友好，4B 也能训能跑。 🧠 **Mage-VL**（图/视频理解 + 主动流式） - 视觉编码器 **Mage-ViT 从头训**，生物启发 I/P 预测 patch（16×16），视觉 token 砍 75%+，**推理 3.5× 加速、视频训练时长 8×** - 配 **Qwen3-4B** decoder，整 4B；**单 checkpoint 同时支持图/视频理解 +
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L12] Assistant: 4步蒸馏 Turbo** - 论文：arXiv 2607.19064｜许可证 MIT 📦 **HF 模型清单（共 8 个）** - 理解：microsoft/Mage-VL、microsoft/Mage-ViT - 生成（各 3 变体）：Mage-Flow-Base / Mage-Flow / Mage-Flow-Turbo + Mage-Flow-Edit-Base / Edit / Edit-Turbo 🔍 **对你的价值** 4B 单卡能跑（Mac mini 直接起飞）；Mage-VL 的"主动流式 gate"是稀
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L13] User: 官方GitHub仓库：https://github.com/autowarefoundation/auto_e2e 更多资料：https://www.autoware.org/
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L14] Assistant: 收到，立刻抓取两个页面。
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L17] Assistant: GitHub超时，我重试一下，同时抓一些 Autoware 相关的资源页面。
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L21] Assistant: GitHub 仓库还是超时，我用另外两个角度查一下资料。
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L25] Assistant: GitHub 反复超时。我换 curl 直接拉 raw README，应该更稳。
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L28] Assistant: 继续等 raw README 的 curl 完成。
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L31] Assistant: README 拿到了。让我再抓一下 Model 目录的细节，给一份更完整的摘要。
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L35] Assistant: 📌 **TL;DR** Autoware Foundation 出品 **AutoE2E**：开源端到端自动驾驶模型，**7 路摄像头 + 地图 tile + 自车运动 + 视觉历史 → 直接预测 6.4 秒未来轨迹**（加速度 + 曲率，10Hz）。Apache 2.0。 🧠 **架构核心** - **输入**：7 相机（环视 + 长焦）+ 渲染地图 + 自车状态 + 视觉历史 - **输出**：6.4s 未来轨迹，加速度 / 曲率 10Hz - **Camera-only baseline** → L2++ ADAS
+[main/sessions/main/e6a7eb27-fdc1-4105-aedb-e4f7cab1a69f.jsonl#L35] Assistant: **归属与许可** - **Autoware Foundation**（全球最大自动驾驶开源组织，ROS 生态主导）旗下 - 许可证 **Apache 2.0** 🔍 **对你的价值** 跟你的主线（AI 多模态 / Agent / NAS / 本地推理）**邻接不在主航道**：纯视觉 E2E driving 是独立垂类，但有 3 个可挂钩的点： 1. **多模态融合范式**（7 camera + map + egomotion → 轨迹）和 Mage-VL 那条 E2E/VLM 思路方法论相通 2. **DataMode

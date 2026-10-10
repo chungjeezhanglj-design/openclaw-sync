@@ -1,0 +1,12 @@
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L5] User: 讲讲中国的三级阶梯
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L6] Assistant: # 中国的三级阶梯 中国地势**西高东低**，呈三级阶梯状自西向东下降。这是中国地形最显著的特征。 ## 🥇 第一级阶梯（海拔 4000m 以上） **主体**：青藏高原（"世界屋脊"），包括柴达木盆地 - **南界**：喜马拉雅山脉 - **北界**：昆仑山 — 祁连山 — 横断山脉 ## 🥈 第二级阶梯（海拔 1000-2000m） **分布**：第一阶梯以东、以北的广阔区域 - **高原**：内蒙古高原、黄土高原、云贵高原 - **盆地**：四川盆地、塔里木盆地、准噶尔盆地 - **分界线**（与第三阶梯交界）：**
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L7] User: 请提供一张图表示
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L12] Assistant: 我来生成一个示意图。先创建工作目录，然后写一个简洁的 SVG。
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L16] Assistant: 让我用 Chrome DevTools 渲染验证一下效果。
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L43] Assistant: 我来生成一个示意图。先创建工作目录，然后写一个简洁的 SVG。让我用 Chrome DevTools 渲染验证一下效果。
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L47] User: 用一张带有行政区划的中国地图表示一下
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L48] Assistant: 让我先找一个公开的中国行政区划 SVG 底图，再叠加三级阶梯配色。
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L84] Assistant: 太好了，数据完整。现在生成带行政区划的三级阶梯地图。
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L104] Assistant: 地图出来了，但有几处需要调整：北京/天津标签挤在一起、图例被截断（缺第三阶梯）、分界山脉标签和省份重叠。修一下。
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L110] Assistant: 黑龙江标签被南海诸岛图框挡住了。把南海诸岛挪到右侧空海域。
+[main/sessions/main/2c364fb0-c551-4434-a0af-fba63eede62f.jsonl#L118] Assistant: 地图完成。最终版本：34 个省级行政区按三级阶梯配色，分界山脉单独标注，南海诸岛放到了右侧海域不挡视线。 ![中国地势三级阶梯行政区划图](attachment:preview-map.png) 文件已保存到 `~/openclaw/workspace/diagrams/`： - `china-three-steps-map.html` — 可在浏览器打开的交互版本 - `preview-map.png` — 静态预览 - `build-map.js` — 重新生成脚本（数据源：DataV.GeoAtlas） 需要我把每个

@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>📁 CAD 文件上传 - 中国离线地图</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* 上传区域 */
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: #2196f3;
+            background: #e3f2fd;
+        }
+        
+        .upload-area .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .upload-area h3 {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .upload-area p {
+            font-size: 13px;
+            color: #999;
+        }
+        
+        .upload-area input[type="file"] {
+            display: none;
+        }
+        
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-group input[type="color"] {
+            width: 60px;
+            height: 35px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1976d2;
+        }
+        
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #388e3c;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 文件列表 */
+        .file-list {
+            list-style: none;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+        
+        .file-item .icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        
+        .file-item .info {
+            flex: 1;
+        }
+        
+        .file-item .name {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .file-item .meta {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .file-item .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .file-item .actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        /* 状态提示 */
+        .alert {
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+        
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        
+        .alert-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #90caf9;
+        }
+        
+        /* 预览区域 */
+        .preview {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background: #fafafa;
+            margin-top: 15px;
+        }
+        
+        .preview h4 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .preview-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .stat-item {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2196f3;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        /* 帮助文本 */
+        .help-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2196f3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 CAD 文件上传</h1>
+        
+        <!-- 上传区域 -->
+        <div class="card">
+            <h2>📤 上传文件</h2>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="icon">📐</div>
+                <h3>拖拽文件到此处，或点击上传</h3>
+                <p>支持 SVG、DXF 格式</p>
+                <input type="file" id="fileInput" accept=".svg,.dxf" multiple onchange="handleFiles(this.files)">
+            </div>
+            
+            <div id="uploadStatus" style="margin-top: 15px;"></div>
+        </div>
+        
+        <!-- 文件列表 -->
+        <div class="card" id="fileListCard" style="display: none;">
+            <h2>📋 已上传文件 (<span id="fileCount">0</span>)</h2>
+            <ul class="file-list" id="fileList"></ul>
+        </div>
+        
+        <!-- 设置面板 -->
+        <div class="card" id="settingsCard" style="display: none;">
+            <h2>⚙️ 显示设置</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>中心经度</label>
+                    <input type="number" id="centerLng" step="0.0001" value="114.50" placeholder="例如：114.50">
+                    <div class="help-text">地图中心点经度</div>
+                </div>
+                <div class="form-group">
+                    <label>中心纬度</label>
+                    <input type="number" id="centerLat" step="0.0001" value="38.04" placeholder="例如：38.04">
+                    <div class="help-text">地图中心点纬度</div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>缩放比例</label>
+                    <input type="number" id="scale" step="0.0001" value="0.0001" placeholder="例如：0.0001">
+                    <div class="help-text">CAD 坐标到地理坐标的缩放</div>
+                </div>
+                <div class="form-group">
+                    <label>旋转角度 (度)</label>
+                    <input type="number" id="rotation" step="1" value="0" placeholder="0-360">
+                    <div class="help-text">逆时针旋转角度</div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>线条颜色</label>
+                    <input type="color" id="lineColor" value="#9b59b6">
+                </div>
+                <div class="form-group">
+                    <label>线条宽度</label>
+                    <input type="number" id="lineWidth" step="0.5" value="2" min="0.5" max="10">
+                </div>
+                <div class="form-group">
+                    <label>填充颜色</label>
+                    <input type="color" id="fillColor" value="#9b59b6">
+                </div>
+                <div class="form-group">
+                    <label>透明度</label>
+                    <input type="number" id="opacity" step="0.1" value="0.8" min="0" max="1" placeholder="0-1">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="flipY" checked>
+                    翻转 Y 轴
+                </label>
+                <div class="help-text">CAD 坐标系 Y 轴向上，地理坐标系 Y 轴向下</div>
+            </div>
+            
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="applySettings()">
+                    ✅ 应用设置
+                </button>
+                <button class="btn btn-success" onclick="showOnMap()">
+                    🗺️ 在地图上显示
+                </button>
+                <button class="btn btn-primary" onclick="autoFit()">
+                    🎯 自动适配
+                </button>
+            </div>
+        </div>
+        
+        <!-- 预览区域 -->
+        <div class="card" id="previewCard" style="display: none;">
+            <h2>👁️ 文件预览</h2>
+            <div class="preview">
+                <h4>统计信息</h4>
+                <div class="preview-stats" id="previewStats">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="cad-parser.js"></script>
+    <script>
+        // 全局变量
+        let uploadedFiles = [];
+        let parsedGeoJSON = null;
+        
+        // 拖拽上传
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        // 处理上传的文件
+        function handleFiles(files) {
+            const statusDiv = document.getElementById('uploadStatus');
+            
+            Array.from(files).forEach(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (!['svg', 'dxf'].includes(ext)) {
+                    showStatus(`❌ 不支持的文件格式：${file.name}`, 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    parseFile(file.name, content, ext);
+                };
+                reader.onerror = () => {
+                    showStatus(`❌ 读取文件失败：${file.name}`, 'error');
+                };
+                reader.readAsText(file);
+            });
+        }
+        
+        // 解析文件
+        function parseFile(filename, content, ext) {
+            try {
+                let geojson;
+                
+                if (ext === 'svg') {
+                    geojson = parseSVG(content);
+                } else if (ext === 'dxf') {
+                    geojson = parseDXF(content);
+                }
+                
+                if (!geojson || !geojson.features || geojson.features.length === 0) {
+                    showStatus(`⚠️ 文件 ${filename} 中没有找到有效几何数据`, 'error');
+                    return;
+                }
+                
+                // 保存文件信息
+                const fileInfo = {
+                    name: filename,
+                    type: ext,
+                    geojson: geojson,
+                    featureCount: geojson.features.length,
+                    uploadTime: new Date().toLocaleString()
+                };
+                
+                uploadedFiles.push(fileInfo);
+                
+                // 更新 UI
+                updateFileList();
+                updatePreview();
+                showSettings();
+                
+                showStatus(`✅ 成功解析 ${filename}，包含 ${geojson.features.length} 个要素`, 'success');
+                
+            } catch (error) {
+                showStatus(`❌ 解析文件失败：${filename} - ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+        
+        // 更新文件列表
+        function updateFileList() {
+            const listCard = document.getElementById('fileListCard');
+            const list = document.getElementById('fileList');
+            const count = document.getElementById('fileCount');
+            
+            listCard.style.display = uploadedFiles.length > 0 ? 'block' : 'none';
+            count.textContent = uploadedFiles.length;
+            
+            list.innerHTML = uploadedFiles.map((file, index) => `
+                <li class="file-item">
+                    <div class="icon">${file.type === 'svg' ? '📐' : '📝'}</div>
+                    <div class="info">
+                        <div class="name">${file.name}</div>
+                        <div class="meta">
+                            ${file.featureCount} 个要素 · 
+                            上传于 ${file.uploadTime}
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="previewFile(${index})">
+                            👁️ 预览
+                        </button>
+                        <button class="btn btn-danger" onclick="removeFile(${index})">
+                            🗑️ 删除
+                        </button>
+                    </div>
+                </li>
+            `).join('');
+        }
+        
+        // 更新预览
+        function updatePreview() {
+            const previewCard = document.getElementById('previewCard');
+            const stats = document.getElementById('previewStats');
+            
+            previewCard.style.display = uploadedFiles.length > 0 ? 'block' : 'none';
+            
+            const totalFeatures = uploadedFiles.reduce((sum, f) => sum + f.featureCount, 0);
+            const bounds = getAllBounds();
+            
+            stats.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value">${uploadedFiles.length}</div>
+                    <div class="stat-label">文件数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${totalFeatures}</div>
+                    <div class="stat-label">总要素数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${bounds ? bounds.width.toFixed(2) : '-'}</div>
+                    <div class="stat-label">宽度</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${bounds ? bounds.height.toFixed(2) : '-'}</div>
+                    <div class="stat-label">高度</div>
+                </div>
+            `;
+        }
+        
+        // 显示设置面板
+        function showSettings() {
+            document.getElementById('settingsCard').style.display = 'block';
+        }
+        
+        // 显示状态
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 5000);
+        }
+        
+        // 预览单个文件
+        window.previewFile = function(index) {
+            const file = uploadedFiles[index];
+            console.log('预览文件:', file);
+            alert(`文件：${file.name}\n类型：${file.type}\n要素数：${file.featureCount}`);
+        };
+        
+        // 删除文件
+        window.removeFile = function(index) {
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+            updatePreview();
+            
+            if (uploadedFiles.length === 0) {
+                document.getElementById('settingsCard').style.display = 'none';
+                document.getElementById('previewCard').style.display = 'none';
+            }
+        };
+        
+        // 获取所有文件的边界
+        function getAllBounds() {
+            if (uploadedFiles.length === 0) return null;
+            
+            let minX = Infinity, minY = Infinity;
+            let maxX = -Infinity, maxY = -Infinity;
+            
+            uploadedFiles.forEach(file => {
+                const bounds = getBounds(file.geojson);
+                minX = Math.min(minX, bounds.minX);
+                minY = Math.min(minY, bounds.minY);
+                maxX = Math.max(maxX, bounds.maxX);
+                maxY = Math.max(maxY, bounds.maxY);
+            });
+            
+            return {
+                minX, minY, maxX, maxY,
+                width: maxX - minX,
+                height: maxY - minY
+            };
+        }
+        
+        // 应用设置
+        window.applySettings = function() {
+            const options = {
+                centerX: parseFloat(document.getElementById('centerLng').value),
+                centerY: parseFloat(document.getElementById('centerLat').value),
+                scale: parseFloat(document.getElementById('scale').value),
+                rotation: parseFloat(document.getElementById('rotation').value),
+                flipY: document.getElementById('flipY').checked
+            };
+            
+            // 合并所有文件
+            const merged = {
+                type: 'FeatureCollection',
+                features: []
+            };
+            
+            uploadedFiles.forEach(file => {
+                const transformed = transformGeoJSON(file.geojson, options);
+                merged.features.push(...transformed.features);
+            });
+            
+            parsedGeoJSON = merged;
+            
+            // 保存设置到 localStorage
+            localStorage.setItem('cadUploadSettings', JSON.stringify(options));
+            
+            showStatus('✅ 设置已应用', 'success');
+        };
+        
+        // 在地图上显示
+        window.showOnMap = function() {
+            if (!parsedGeoJSON) {
+                applySettings();
+            }
+            
+            if (!parsedGeoJSON || parsedGeoJSON.features.length === 0) {
+                showStatus('❌ 没有可显示的数据', 'error');
+                return;
+            }
+            
+            // 保存到 localStorage
+            localStorage.setItem('cadUploadGeoJSON', JSON.stringify(parsedGeoJSON));
+            
+            // 获取样式设置
+            const style = {
+                lineColor: document.getElementById('lineColor').value,
+                lineWidth: parseFloat(document.getElementById('lineWidth').value),
+                fillColor: document.getElementById('fillColor').value,
+                opacity: parseFloat(document.getElementById('opacity').value)
+            };
+            
+            localStorage.setItem('cadUploadStyle', JSON.stringify(style));
+            
+            // 打开地图页面
+            const mapUrl = 'map-cad-upload.html';
+            window.open(mapUrl, '_blank');
+            
+            showStatus('✅ 已在地图中打开', 'success');
+        };
+        
+        // 自动适配
+        window.autoFit = function() {
+            const bounds = getAllBounds();
+            if (!bounds) {
+                showStatus('❌ 没有可计算的数据', 'error');
+                return;
+            }
+            
+            // 计算中心点
+            const centerX = (bounds.minX + bounds.maxX) / 2;
+            const centerY = (bounds.minY + bounds.maxY) / 2;
+            
+            // 估算合适的缩放比例（假设目标显示范围为 0.1 度）
+            const targetSize = 0.1;
+            const scale = targetSize / Math.max(bounds.width, bounds.height);
+            
+            document.getElementById('centerLng').value = centerX.toFixed(4);
+            document.getElementById('centerLat').value = centerY.toFixed(4);
+            document.getElementById('scale').value = scale.toFixed(6);
+            
+            showStatus('✅ 已自动计算适配参数', 'success');
+        };
+        
+        // 加载保存的设置
+        function loadSavedSettings() {
+            const saved = localStorage.getItem('cadUploadSettings');
+            if (saved) {
+                const options = JSON.parse(saved);
+                document.getElementById('centerLng').value = options.centerX || 114.50;
+                document.getElementById('centerLat').value = options.centerY || 38.04;
+                document.getElementById('scale').value = options.scale || 0.0001;
+                document.getElementById('rotation').value = options.rotation || 0;
+                document.getElementById('flipY').checked = options.flipY !== false;
+            }
+            
+            const savedStyle = localStorage.getItem('cadUploadStyle');
+            if (savedStyle) {
+                const style = JSON.parse(savedStyle);
+                document.getElementById('lineColor').value = style.lineColor || '#9b59b6';
+                document.getElementById('lineWidth').value = style.lineWidth || 2;
+                document.getElementById('fillColor').value = style.fillColor || '#9b59b6';
+                document.getElementById('opacity').value = style.opacity || 0.8;
+            }
+        }
+        
+        // 初始化
+        loadSavedSettings();
+    </script>
+</body>
+</html>

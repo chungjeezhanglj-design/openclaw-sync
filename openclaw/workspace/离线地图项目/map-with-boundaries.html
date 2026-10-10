@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>🗺️ 中国离线地图 - 完整边界版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; width: 100%; }
+        #map { height: 100%; width: 100%; }
+        .info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-family: system-ui;
+            max-width: 350px;
+        }
+        .info h3 { margin: 0 0 10px; font-size: 16px; }
+        .info p { margin: 5px 0; font-size: 13px; color: #666; }
+        .legend { margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        .legend-item { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 12px; }
+        .legend-line { width: 30px; height: 3px; border-radius: 2px; }
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .controls button {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f5f5f5;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .controls button:hover { background: #e0e0e0; }
+        .status { font-weight: bold; }
+        .status.ok { color: #22c55e; }
+        .status.loading { color: #f59e0b; }
+    </style>
+    <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="info">
+        <h3>🗺️ 中国离线地图</h3>
+        <p><strong>状态：</strong><span id="status" class="status loading">加载中...</span></p>
+        <p><strong>Zoom：</strong><span id="zoom">-</span></p>
+        <p><strong>中心：</strong><span id="center">-</span></p>
+        <p><strong>瓦片：</strong><span id="tiles">0</span></p>
+        <div class="legend">
+            <div class="legend-item"><div class="legend-line" style="background:#e74c3c;width:30px;height:4px"></div>国界 (阿里云 DataV)</div>
+            <div class="legend-item"><div class="legend-line" style="background:#e67e22;width:28px;height:3px;border:2px dashed #d35400"></div>省界 (阿里云 DataV)</div>
+            <div class="legend-item"><div class="legend-line" style="background:#8fb8e8;width:24px;height:2px"></div>水体</div>
+            <div class="legend-item"><div class="legend-line" style="background:#e0d8c8;width:24px;height:2px"></div>陆地</div>
+            <div class="legend-item"><div class="legend-line" style="background:#fff;width:24px;height:2px;border:1px solid #c73e3e"></div>道路</div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button onclick="flyTo(104.11, 33.96, 4, '中国全境')">🇨🇳 中国全境</button>
+        <button onclick="flyTo(116.4, 39.9, 6, '北京')">📍 北京</button>
+        <button onclick="flyTo(121.5, 31.2, 6, '上海')">📍 上海</button>
+        <button onclick="flyTo(113.3, 23.1, 6, '广州')">📍 广州</button>
+        <button onclick="flyTo(104.1, 30.6, 6, '成都')">📍 成都</button>
+        <button onclick="flyTo(87.6, 43.8, 5, '新疆')">📍 新疆</button>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px">
+            <input type="checkbox" id="toggle-boundary" checked onchange="toggleBoundary()"> 显示国界
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:5px;font-size:13px">
+            <input type="checkbox" id="toggle-province" checked onchange="toggleProvince()"> 显示省界
+        </label>
+    </div>
+    
+    <script>
+        let tileCount = 0;
+        let map;
+        let boundaryLayerVisible = true;
+        let provinceLayerVisible = true;
+        
+        // 飞入动画
+        window.flyTo = function(lon, lat, z, name) {
+            map.flyTo({
+                center: [lon, lat],
+                zoom: z,
+                duration: 1500
+            });
+        };
+        
+        // 切换图层显示
+        window.toggleBoundary = function() {
+            boundaryLayerVisible = document.getElementById('toggle-boundary').checked;
+            const layer = map.getLayoutProperty('china-boundary', 'visibility');
+            map.setLayoutProperty('china-boundary', 'visibility', boundaryLayerVisible ? 'visible' : 'none');
+        };
+        
+        window.toggleProvince = function() {
+            provinceLayerVisible = document.getElementById('toggle-province').checked;
+            map.setLayoutProperty('china-province', 'visibility', provinceLayerVisible ? 'visible' : 'none');
+        };
+        
+        // 初始化地图
+        console.log('🚀 开始加载地图...');
+        
+        map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+                sources: {
+                    // MBTiles 矢量瓦片源
+                    'china': {
+                        type: 'vector',
+                        tiles: ['http://localhost:8083/{z}/{x}/{y}.pbf'],
+                        minzoom: 0,
+                        maxzoom: 14
+                    },
+                    // 阿里云国界 GeoJSON
+                    'china-boundary': {
+                        type: 'geojson',
+                        data: '/离线地图项目/data/boundaries/china-national.geojson'
+                    },
+                    // 阿里云省界 GeoJSON
+                    'china-province': {
+                        type: 'geojson',
+                        data: '/离线地图项目/data/boundaries/china-provinces.geojson'
+                    }
+                },
+                layers: [
+                    // 背景
+                    { id: 'background', type: 'background', paint: { 'background-color': '#f5f5f0' } },
+                    
+                    // 水体
+                    { id: 'water', type: 'fill', source: 'china', 'source-layer': 'water_polygons', minzoom: 4, paint: { 'fill-color': '#8fb8e8' } },
+                    
+                    // 陆地
+                    { id: 'land', type: 'fill', source: 'china', 'source-layer': 'land', minzoom: 7, paint: { 'fill-color': '#e0d8c8' } },
+                    
+                    // === 阿里云边界数据 ===
+                    
+                    // 国界
+                    {
+                        id: 'china-boundary',
+                        type: 'line',
+                        source: 'china-boundary',
+                        paint: {
+                            'line-color': '#e74c3c',
+                            'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 3, 12, 4],
+                            'line-opacity': 0.9
+                        }
+                    },
+                    
+                    // 省界
+                    {
+                        id: 'china-province',
+                        type: 'line',
+                        source: 'china-province',
+                        paint: {
+                            'line-color': '#e67e22',
+                            'line-width': ['interpolate', ['linear'], ['zoom'], 6, 1.5, 10, 2, 14, 3],
+                            'line-dasharray': [4, 2],
+                            'line-opacity': 0.8
+                        }
+                    },
+                    
+                    // 道路（从 MBTiles）
+                    { id: 'streets', type: 'line', source: 'china', 'source-layer': 'streets', minzoom: 10, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 3] } },
+                    
+                    // 地名标注
+                    { id: 'place_labels', type: 'symbol', source: 'china', 'source-layer': 'place_labels', minzoom: 4, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 4, 12, 8, 16, 12, 22] }, paint: { 'text-color': '#333', 'text-halo-color': '#fff', 'text-halo-width': 2 } }
+                ]
+            },
+            center: [104.11, 33.96],
+            zoom: 4
+        });
+        
+        // 地图加载完成
+        map.on('load', () => {
+            console.log('✅ 地图加载成功');
+            document.getElementById('status').innerHTML = '<span class="status ok">✅ 正常运行</span>';
+        });
+        
+        // 错误处理
+        map.on('error', (e) => {
+            console.error('❌ 错误:', e.error);
+            document.getElementById('status').innerHTML = '<span class="status error">❌ ' + e.error.message + '</span>';
+        });
+        
+        // 数据加载事件
+        map.on('data', (e) => {
+            if (e.dataType === 'source' && e.sourceId === 'china') {
+                tileCount++;
+                document.getElementById('tiles').textContent = tileCount;
+            }
+        });
+        
+        // Zoom 变化
+        map.on('zoom', () => {
+            document.getElementById('zoom').textContent = map.getZoom().toFixed(2);
+            const center = map.getCenter();
+            document.getElementById('center').textContent = `${center.lng.toFixed(2)}, ${center.lat.toFixed(2)}`;
+        });
+        
+        // 添加控件
+        map.addControl(new maplibregl.NavigationControl());
+        map.addControl(new maplibregl.ScaleControl());
+        
+        console.log('✅ 地图初始化完成');
+    </script>
+</body>
+</html>

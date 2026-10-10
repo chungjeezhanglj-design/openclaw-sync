@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect x="50" y="50" width="700" height="500" fill="#f0f0f0" stroke="#333" stroke-width="2"/>
+  
+  <!-- 建筑物轮廓 -->
+  <path d="M 100 100 L 200 100 L 200 150 L 100 150 Z" fill="#e0d8c8" stroke="#9b59b6" stroke-width="2"/>
+  <path d="M 250 100 L 350 100 L 350 200 L 250 200 Z" fill="#e0d8c8" stroke="#9b59b6" stroke-width="2"/>
+  <path d="M 400 100 L 500 100 L 500 180 L 400 180 Z" fill="#e0d8c8" stroke="#9b59b6" stroke-width="2"/>
+  
+  <!-- 道路 -->
+  <line x1="100" y1="250" x2="700" y2="250" stroke="#9b59b6" stroke-width="3"/>
+  <line x1="400" y1="100" x2="400" y2="500" stroke="#9b59b6" stroke-width="3"/>
+  
+  <!-- 圆形区域 -->
+  <circle cx="550" cy="350" r="80" fill="none" stroke="#9b59b6" stroke-width="2"/>
+  <circle cx="550" cy="350" r="40" fill="none" stroke="#9b59b6" stroke-width="2"/>
+  
+  <!-- 多边形区域 -->
+  <path d="M 150 350 L 250 350 L 300 450 L 200 500 L 100 450 Z" fill="none" stroke="#9b59b6" stroke-width="2"/>
+  
+  <!-- 文字标注 -->
+  <text x="150" y="130" font-family="Arial" font-size="14" fill="#333">建筑 A</text>
+  <text x="300" y="150" font-family="Arial" font-size="14" fill="#333">建筑 B</text>
+  <text x="450" y="140" font-family="Arial" font-size="14" fill="#333">建筑 C</text>
+  <text x="550" y="355" font-family="Arial" font-size="14" fill="#333" text-anchor="middle">圆形广场</text>
+  <text x="200" y="430" font-family="Arial" font-size="14" fill="#333" text-anchor="middle">公园</text>
+  
+  <!-- 图例 -->
+  <rect x="600" y="500" width="150" height="80" fill="white" stroke="#333" stroke-width="1"/>
+  <text x="610" y="520" font-family="Arial" font-size="12" fill="#333">图例：</text>
+  <line x1="610" y1="535" x2="650" y2="535" stroke="#9b59b6" stroke-width="3"/>
+  <text x="660" y="540" font-family="Arial" font-size="11" fill="#666">道路</text>
+  <rect x="610" y="550" width="40" height="20" fill="#e0d8c8" stroke="#9b59b6" stroke-width="2"/>
+  <text x="660" y="565" font-family="Arial" font-size="11" fill="#666">建筑物</text>
+</svg>

@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>🗺️ 中国离线地图 - 终极版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; width: 100%; overflow: hidden; }
+        #map { height: 100%; width: 100%; }
+        
+        /* 顶部工具栏 */
+        .toolbar {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            gap: 10px;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .search-box input {
+            width: 300px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .search-box button {
+            padding: 8px 16px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .search-box button:hover {
+            background: #1976d2;
+        }
+        
+        .toolbar-divider {
+            width: 1px;
+            height: 24px;
+            background: #ddd;
+        }
+        
+        .toolbar-btn {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .toolbar-btn:hover {
+            background: #f5f5f5;
+        }
+        
+        .toolbar-btn.active {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+        
+        /* 通用面板样式 */
+        .panel {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            overflow: hidden;
+            max-height: calc(100vh - 100px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .panel-header h3 {
+            font-size: 14px;
+            color: #333;
+            margin: 0;
+        }
+        
+        .panel-content {
+            padding: 10px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        /* 信息面板 */
+        .info-panel {
+            top: 70px;
+            left: 10px;
+            width: 280px;
+        }
+        
+        .info-panel p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .status { font-weight: bold; }
+        .status.ok { color: #22c55e; }
+        
+        /* 图层面板 */
+        .layer-panel {
+            top: 70px;
+            right: 10px;
+            width: 340px;
+            max-height: calc(100vh - 80px);
+        }
+        
+        .layer-panel-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .layer-category {
+            margin-bottom: 15px;
+        }
+        
+        .layer-category-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .layer-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+        
+        .layer-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .layer-item label {
+            flex: 1;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .layer-zoom {
+            font-size: 11px;
+            color: #999;
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        /* 工具面板 */
+        .tools-panel {
+            bottom: 10px;
+            left: 10px;
+            width: 300px;
+        }
+        
+        .tool-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tool-btn:hover {
+            background: #f5f5f5;
+        }
+        
+        .tool-btn.active {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+        
+        .tool-btn .emoji { font-size: 16px; }
+        
+        /* 测量结果 */
+        .measure-result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            font-size: 13px;
+            display: none;
+        }
+        
+        .measure-result.show {
+            display: block;
+        }
+        
+        .measure-result .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2196f3;
+        }
+        
+        /* 按钮组 */
+        .btn-group {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .btn-group button {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-group button:hover {
+            background: #f0f0f0;
+        }
+        
+        .btn-group button.active {
+            background: #2196f3;
+            color: white;
+            border-color: #2196f3;
+        }
+        
+        /* CAD 面板 */
+        .cad-panel {
+            bottom: 10px;
+            right: 10px;
+            width: 380px;
+        }
+        
+        .cad-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .cad-upload-area:hover {
+            border-color: #2196f3;
+            background: #e3f2fd;
+        }
+        
+        .cad-upload-area .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .cad-file-list {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .cad-file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        
+        .cad-file-item .name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .cad-file-item .actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .cad-file-item button {
+            padding: 4px 8px;
+            font-size: 11px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .cad-settings {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .cad-setting-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        
+        .cad-setting-row label {
+            width: 80px;
+            color: #666;
+        }
+        
+        .cad-setting-row input[type="number"],
+        .cad-setting-row input[type="color"] {
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        
+        .cad-setting-row input[type="color"] {
+            width: 40px;
+            height: 28px;
+        }
+        
+        /* 路径规划面板 */
+        .route-panel {
+            top: 70px;
+            left: 300px;
+            width: 320px;
+            display: none;
+        }
+        
+        .route-panel.show {
+            display: flex;
+        }
+        
+        .route-input {
+            margin-bottom: 15px;
+        }
+        
+        .route-input label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .route-input input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .route-result {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            font-size: 13px;
+            display: none;
+        }
+        
+        .route-result.show {
+            display: block;
+        }
+        
+        .route-result .distance {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2196f3;
+            margin-bottom: 5px;
+        }
+        
+        .route-result .duration {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        /* 搜索结果 */
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1001;
+        }
+        
+        .search-results.show {
+            display: block;
+        }
+        
+        .search-result-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .search-result-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .search-result-item .name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .search-result-item .address {
+            font-size: 11px;
+            color: #999;
+        }
+        
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+        
+        /* 隐藏文件输入 */
+        .file-input-hidden {
+            display: none;
+        }
+    </style>
+    <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <!-- 顶部工具栏 -->
+    <div class="toolbar">
+        <div class="search-box" style="position: relative;">
+            <input type="text" id="search-input" placeholder="🔍 搜索地名、地址..." onkeyup="handleSearchKey(event)">
+            <button onclick="doSearch()">搜索</button>
+            <div class="search-results" id="search-results"></div>
+        </div>
+        
+        <div class="toolbar-divider"></div>
+        
+        <button class="toolbar-btn" onclick="togglePanel('route-panel')" id="btn-route">
+            <span>🛣️</span>
+            <span>路径规划</span>
+        </button>
+        
+        <button class="toolbar-btn" onclick="toggleBookmarks()">
+            <span>📌</span>
+            <span>书签</span>
+        </button>
+        
+        <button class="toolbar-btn" onclick="toggleTheme()">
+            <span id="theme-icon">🌙</span>
+            <span id="theme-text">夜间</span>
+        </button>
+    </div>
+    
+    <!-- 信息面板 -->
+    <div class="panel info-panel">
+        <div class="panel-header">
+            <h3>🗺️ 中国离线地图</h3>
+        </div>
+        <div class="panel-content">
+            <p><strong>状态：</strong><span id="status" class="status ok">✅ 正常运行</span></p>
+            <p><strong>Zoom：</strong><span id="zoom">-</span></p>
+            <p><strong>中心：</strong><span id="center">-</span></p>
+            <p><strong>瓦片：</strong><span id="tiles">0</span></p>
+            <p><strong>图层：</strong><span id="layer-count">0</span> 个</p>
+        </div>
+    </div>
+    
+    <!-- 路径规划面板 -->
+    <div class="panel route-panel" id="route-panel">
+        <div class="panel-header">
+            <h3>🛣️ 路径规划</h3>
+            <button onclick="togglePanel('route-panel')" style="background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
+        </div>
+        <div class="panel-content">
+            <div class="route-input">
+                <label>起点</label>
+                <input type="text" id="route-start" placeholder="点击地图或输入坐标">
+                <button onclick="setRoutePoint('start')" style="margin-top:5px;width:100%;padding:6px;font-size:12px;">📍 在地图上选择</button>
+            </div>
+            
+            <div class="route-input">
+                <label>终点</label>
+                <input type="text" id="route-end" placeholder="点击地图或输入坐标">
+                <button onclick="setRoutePoint('end')" style="margin-top:5px;width:100%;padding:6px;font-size:12px;">📍 在地图上选择</button>
+            </div>
+            
+            <button onclick="calculateRoute()" style="width:100%;padding:10px;background:#2196f3;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;">
+                🚗 开始规划
+            </button>
+            
+            <div class="route-result" id="route-result">
+                <div class="distance" id="route-distance">-</div>
+                <div class="duration" id="route-duration">-</div>
+                <div style="margin-top:10px;">
+                    <button onclick="clearRoute()" style="padding:6px 12px;font-size:12px;">清除路线</button>
+                </div>
+            </div>
+            
+            <div style="margin-top:15px;padding-top:15px;border-top:1px solid #eee;">
+                <div style="font-size:12px;color:#666;margin-bottom:8px;">规划方式：</div>
+                <div class="btn-group" style="margin-top:0;">
+                    <button onclick="setRouteMode('driving')" id="mode-driving" class="active">🚗 驾车</button>
+                    <button onclick="setRouteMode('walking')" id="mode-walking">🚶 步行</button>
+                    <button onclick="setRouteMode('cycling')" id="mode-cycling">🚴 骑行</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 图层面板 -->
+    <div class="panel layer-panel">
+        <div class="panel-header">
+            <h3>🎨 图层控制</h3>
+            <div style="display:flex;gap:5px">
+                <button onclick="toggleAll(true)" style="padding:4px 8px;font-size:11px;cursor:pointer">全选</button>
+                <button onclick="toggleAll(false)" style="padding:4px 8px;font-size:11px;cursor:pointer">取消</button>
+            </div>
+        </div>
+        <div class="panel-content layer-panel-content" id="layer-list">
+            <!-- 图层列表由 JS 生成 -->
+        </div>
+    </div>
+    
+    <!-- 工具面板 -->
+    <div class="panel tools-panel">
+        <div class="panel-header">
+            <h3>🛠️ 工具箱</h3>
+        </div>
+        <div class="panel-content">
+            <button class="tool-btn" onclick="toggleMeasure('distance')" id="btn-distance">
+                <span class="emoji">📏</span>
+                <span>距离测量</span>
+            </button>
+            <button class="tool-btn" onclick="toggleMeasure('area')" id="btn-area">
+                <span class="emoji">📐</span>
+                <span>面积测量</span>
+            </button>
+            
+            <div class="measure-result" id="measure-result">
+                <div style="margin-bottom:5px;color:#666">测量结果：</div>
+                <div class="value" id="measure-value">-</div>
+                <div style="font-size:11px;color:#999;margin-top:5px">点击地图添加点，双击结束</div>
+            </div>
+            
+            <div class="btn-group">
+                <button onclick="clearMeasure()">清除</button>
+                <button onclick="exportMeasure()">导出</button>
+            </div>
+            
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee">
+                <div style="font-size:12px;color:#666;margin-bottom:5px">快速定位：</div>
+                <div class="btn-group" style="margin-top:0">
+                    <button onclick="flyTo(104.11, 33.96, 4)">中国</button>
+                    <button onclick="flyTo(116.4, 39.9, 10)">北京</button>
+                    <button onclick="flyTo(121.5, 31.2, 10)">上海</button>
+                    <button onclick="flyTo(114.50, 38.04, 12)">石家庄</button>
+                </div>
+            </div>
+            
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee">
+                <button class="tool-btn" onclick="toggleRoadStyles()" style="margin:5px 0">
+                    <span class="emoji">🛣️</span>
+                    <span>道路样式增强</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- CAD 面板 -->
+    <div class="panel cad-panel">
+        <div class="panel-header">
+            <h3>📁 CAD 工具</h3>
+        </div>
+        <div class="panel-content">
+            <input type="file" id="cad-file-input" class="file-input-hidden" accept=".svg,.dxf,.geojson,.json" onchange="handleCadFileSelect(event)">
+            
+            <div class="cad-upload-area" onclick="document.getElementById('cad-file-input').click()">
+                <div class="icon">📤</div>
+                <div style="font-size:14px;font-weight:600;margin-bottom:5px;">点击上传 CAD 文件</div>
+                <div style="font-size:12px;color:#999;">支持 SVG、DXF、GeoJSON 格式</div>
+            </div>
+            
+            <div class="cad-file-list" id="cad-file-list"></div>
+            
+            <div class="cad-settings" id="cad-settings" style="display:none;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:10px;">图层设置</div>
+                
+                <div class="cad-setting-row">
+                    <label>线宽:</label>
+                    <input type="number" id="cad-line-width" value="2" min="1" max="10" onchange="updateCadStyle()">
+                </div>
+                
+                <div class="cad-setting-row">
+                    <label>颜色:</label>
+                    <input type="color" id="cad-line-color" value="#e74c3c" onchange="updateCadStyle()">
+                </div>
+                
+                <div class="cad-setting-row">
+                    <label>透明度:</label>
+                    <input type="number" id="cad-opacity" value="0.8" min="0" max="1" step="0.1" onchange="updateCadStyle()">
+                </div>
+                
+                <div class="btn-group" style="margin-top:10px;">
+                    <button onclick="centerCadLayer()">🎯 居中显示</button>
+                    <button onclick="removeCadLayer()" style="color:#f44336;">🗑️ 移除</button>
+                </div>
+            </div>
+            
+            <div style="margin-top:15px;padding-top:15px;border-top:1px solid #eee;">
+                <div style="font-size:12px;color:#666;margin-bottom:8px;">示例文件：</div>
+                <button onclick="loadSampleCad()" style="width:100%;padding:8px;font-size:12px;background:#f5f5f5;border:1px solid #ddd;border-radius:4px;cursor:pointer;">
+                    📄 加载测试 SVG
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ==================== 配置 ====================
+        
+        const layerConfig = [
+            { id: 'background', name: '背景色', zoom: '0-14', alwaysOn: true },
+            { id: 'land', name: '陆地', zoom: '7-14' },
+            { id: 'ocean', name: '海洋', zoom: '8-14' },
+            { id: 'water_polygons', name: '水体（面）', zoom: '4-14' },
+            { id: 'water_lines', name: '水系（线）', zoom: '4-14' },
+            { id: 'water_lines_labels', name: '水系标注', zoom: '4-14' },
+            { id: 'boundaries', name: '边界线', zoom: '0-14' },
+            { id: 'boundary_labels', name: '边界标注', zoom: '2-14' },
+            { id: 'china-boundary', name: '国界 (DataV)', zoom: '0-14' },
+            { id: 'china-province', name: '省界 (DataV)', zoom: '0-14' },
+            { id: 'city-boundary', name: '市界 (DataV)', zoom: '6-14' },
+            { id: 'county-130102', name: '长安区界', zoom: '8-14' },
+            { id: 'county-130104', name: '桥西区界', zoom: '8-14' },
+            { id: 'county-130105', name: '新华区界', zoom: '8-14' },
+            { id: 'county-130107', name: '井陉矿区界', zoom: '8-14' },
+            { id: 'county-130108', name: '裕华区界', zoom: '8-14' },
+            { id: 'county-130109', name: '藁城区界', zoom: '8-14' },
+            { id: 'county-130110', name: '鹿泉区界', zoom: '8-14' },
+            { id: 'county-130111', name: '栾城区界', zoom: '8-14' },
+            { id: 'county-130121', name: '井陉县界', zoom: '8-14' },
+            { id: 'county-130123', name: '正定县界', zoom: '8-14' },
+            { id: 'county-130125', name: '行唐县界', zoom: '8-14' },
+            { id: 'county-130126', name: '灵寿县界', zoom: '8-14' },
+            { id: 'county-130127', name: '高邑县界', zoom: '8-14' },
+            { id: 'county-130128', name: '深泽县界', zoom: '8-14' },
+            { id: 'county-130129', name: '赞皇县界', zoom: '8-14' },
+            { id: 'county-130130', name: '无极县界', zoom: '8-14' },
+            { id: 'county-130131', name: '平山县界', zoom: '8-14' },
+            { id: 'county-130132', name: '元氏县界', zoom: '8-14' },
+            { id: 'county-130133', name: '赵县界', zoom: '8-14' },
+            { id: 'county-130181', name: '辛集市界', zoom: '8-14' },
+            { id: 'county-130183', name: '晋州市界', zoom: '8-14' },
+            { id: 'county-130184', name: '新乐市界', zoom: '8-14' },
+            { id: 'place_labels', name: '地名标注', zoom: '3-14' },
+            { id: 'bridges', name: '桥梁', zoom: '12-14' },
+            { id: 'ferries', name: '渡轮线路', zoom: '8-14' },
+            { id: 'street_polygons', name: '道路（面）', zoom: '11-14' },
+            { id: 'streets', name: '道路（线）', zoom: '10-14', note: '基础样式' },
+            { id: 'street_labels', name: '道路标注', zoom: '10-14' },
+            { id: 'public_transport', name: '公共交通', zoom: '11-14' },
+            { id: 'buildings', name: '建筑物', zoom: '14' },
+            { id: 'pois', name: '兴趣点', zoom: '14' }
+        ];
+        
+        const categories = [
+            { name: '基础', emoji: '🌍', ids: ['background', 'land', 'ocean'] },
+            { name: '水系', emoji: '💧', ids: ['water_polygons', 'water_lines', 'water_lines_labels'] },
+            { name: '边界', emoji: '🚩', ids: [
+                'boundaries', 'boundary_labels', 'china-boundary', 'china-province', 'city-boundary',
+                'county-130102', 'county-130104', 'county-130105', 'county-130107', 'county-130108',
+                'county-130109', 'county-130110', 'county-130111', 'county-130121', 'county-130123',
+                'county-130125', 'county-130126', 'county-130127', 'county-130128', 'county-130129',
+                'county-130130', 'county-130131', 'county-130132', 'county-130133', 'county-130181',
+                'county-130183', 'county-130184'
+            ] },
+            { name: '居民地', emoji: '🏙️', ids: ['place_labels'] },
+            { name: '道路', emoji: '🛣️', ids: ['bridges', 'ferries', 'street_polygons', 'streets', 'street_labels'] },
+            { name: '交通', emoji: '🚉', ids: ['public_transport'] },
+            { name: '建筑', emoji: '🏢', ids: ['buildings'] },
+            { name: '兴趣点', emoji: '📍', ids: ['pois'] }
+        ];
+        
+        // ==================== 全局变量 ====================
+        
+        let tileCount = 0;
+        let map;
+        let layerVisibility = {};
+        let measureMode = null;
+        let measurePoints = [];
+        let measureSource = null;
+        let roadStylesEnhanced = false;
+        let darkMode = false;
+        let cadLayers = [];
+        let currentCadLayer = null;
+        let routeMode = 'driving';
+        let routeSelecting = null; // 'start' or 'end'
+        let routeStart = null;
+        let routeEnd = null;
+        let bookmarks = JSON.parse(localStorage.getItem('map-bookmarks') || '[]');
+        
+        // 模拟地名数据（离线搜索）
+        const placeData = [
+            { name: '北京', lng: 116.4, lat: 39.9, address: '北京市' },
+            { name: '上海', lng: 121.5, lat: 31.2, address: '上海市' },
+            { name: '广州', lng: 113.23, lat: 23.16, address: '广东省广州市' },
+            { name: '深圳', lng: 114.07, lat: 22.62, address: '广东省深圳市' },
+            { name: '成都', lng: 104.06, lat: 30.67, address: '四川省成都市' },
+            { name: '重庆', lng: 106.55, lat: 29.56, address: '重庆市' },
+            { name: '天津', lng: 117.2, lat: 39.08, address: '天津市' },
+            { name: '武汉', lng: 114.31, lat: 30.52, address: '湖北省武汉市' },
+            { name: '西安', lng: 108.94, lat: 34.34, address: '陕西省西安市' },
+            { name: '杭州', lng: 120.15, lat: 30.28, address: '浙江省杭州市' },
+            { name: '南京', lng: 118.78, lat: 32.06, address: '江苏省南京市' },
+            { name: '石家庄', lng: 114.50, lat: 38.04, address: '河北省石家庄市' },
+            { name: '天安门', lng: 116.397, lat: 39.908, address: '北京市东城区' },
+            { name: '故宫', lng: 116.397, lat: 39.916, address: '北京市东城区景山前街' },
+            { name: '长城', lng: 116.02, lat: 40.43, address: '北京市延庆区' },
+            { name: '东方明珠', lng: 121.499, lat: 31.239, address: '上海市浦东新区' },
+            { name: '广州塔', lng: 113.323, lat: 23.106, address: '广东省广州市海珠区' },
+            { name: '兵马俑', lng: 109.27, lat: 34.38, address: '陕西省西安市临潼区' }
+        ];
+        
+        // ==================== 地图初始化 ====================
+        
+        function flyTo(lon, lat, z) {
+            map.flyTo({ center: [lon, lat], zoom: z, duration: 1500 });
+        }
+        
+        map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+                sources: {
+                    'china': {
+                        type: 'vector',
+                        tiles: ['http://localhost:8083/{z}/{x}/{y}.pbf'],
+                        minzoom: 0,
+                        maxzoom: 14
+                    },
+                    'china-boundary': {
+                        type: 'geojson',
+                        data: '/离线地图项目/data/boundaries/china-national.geojson'
+                    },
+                    'china-province': {
+                        type: 'geojson',
+                        data: '/离线地图项目/data/boundaries/china-provinces.geojson'
+                    },
+                    'city-boundary': {
+                        type: 'geojson',
+                        data: '/离线地图项目/data/boundaries/city-440100.geojson'
+                    },
+                    'county-130102': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130102.geojson' },
+                    'county-130104': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130104.geojson' },
+                    'county-130105': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130105.geojson' },
+                    'county-130107': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130107.geojson' },
+                    'county-130108': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130108-yuhua.geojson' },
+                    'county-130109': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130109.geojson' },
+                    'county-130110': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130110.geojson' },
+                    'county-130111': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130111.geojson' },
+                    'county-130121': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130121.geojson' },
+                    'county-130123': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130123.geojson' },
+                    'county-130125': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130125.geojson' },
+                    'county-130126': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130126.geojson' },
+                    'county-130127': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130127.geojson' },
+                    'county-130128': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130128.geojson' },
+                    'county-130129': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130129.geojson' },
+                    'county-130130': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130130.geojson' },
+                    'county-130131': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130131.geojson' },
+                    'county-130132': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130132.geojson' },
+                    'county-130133': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130133.geojson' },
+                    'county-130181': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130181.geojson' },
+                    'county-130183': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130183.geojson' },
+                    'county-130184': { type: 'geojson', data: '/离线地图项目/data/boundaries/county-130184.geojson' }
+                },
+                layers: [
+                    { id: 'background', type: 'background', paint: { 'background-color': '#f5f5f0' } },
+                    { id: 'land', type: 'fill', source: 'china', 'source-layer': 'land', minzoom: 7, paint: { 'fill-color': '#e0d8c8' } },
+                    { id: 'ocean', type: 'fill', source: 'china', 'source-layer': 'ocean', minzoom: 8, paint: { 'fill-color': '#a8d5e8' } },
+                    { id: 'water_polygons', type: 'fill', source: 'china', 'source-layer': 'water_polygons', minzoom: 4, paint: { 'fill-color': '#8fb8e8' } },
+                    { id: 'water_lines', type: 'line', source: 'china', 'source-layer': 'water_lines', minzoom: 4, paint: { 'line-color': '#6a9bd4', 'line-width': 1.5 } },
+                    { id: 'water_lines_labels', type: 'symbol', source: 'china', 'source-layer': 'water_lines_labels', minzoom: 4, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11 }, paint: { 'text-color': '#5a8bc4', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'boundaries', type: 'line', source: 'china', 'source-layer': 'boundaries', minzoom: 0, paint: { 'line-color': '#c73e3e', 'line-width': 2, 'line-dasharray': [2, 1] } },
+                    { id: 'boundary_labels', type: 'symbol', source: 'china', 'source-layer': 'boundary_labels', minzoom: 2, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11 }, paint: { 'text-color': '#888', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'china-boundary', type: 'line', source: 'china-boundary', paint: { 'line-color': '#e74c3c', 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 3, 12, 4], 'line-opacity': 0.9 } },
+                    { id: 'china-province', type: 'line', source: 'china-province', paint: { 'line-color': '#e67e22', 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 1.5, 10, 2, 14, 3], 'line-dasharray': [4, 2], 'line-opacity': 0.8 } },
+                    { id: 'city-boundary', type: 'line', source: 'city-boundary', paint: { 'line-color': '#f39c12', 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1, 12, 2], 'line-dasharray': [3, 2], 'line-opacity': 0.7 } },
+                    { id: 'county-130102', type: 'line', source: 'county-130102', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130104', type: 'line', source: 'county-130104', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130105', type: 'line', source: 'county-130105', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130107', type: 'line', source: 'county-130107', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130108', type: 'line', source: 'county-130108', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130109', type: 'line', source: 'county-130109', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130110', type: 'line', source: 'county-130110', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130111', type: 'line', source: 'county-130111', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130121', type: 'line', source: 'county-130121', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130123', type: 'line', source: 'county-130123', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130125', type: 'line', source: 'county-130125', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130126', type: 'line', source: 'county-130126', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130127', type: 'line', source: 'county-130127', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130128', type: 'line', source: 'county-130128', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130129', type: 'line', source: 'county-130129', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130130', type: 'line', source: 'county-130130', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130131', type: 'line', source: 'county-130131', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130132', type: 'line', source: 'county-130132', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130133', type: 'line', source: 'county-130133', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130181', type: 'line', source: 'county-130181', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130183', type: 'line', source: 'county-130183', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'county-130184', type: 'line', source: 'county-130184', paint: { 'line-color': '#9b59b6', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 2], 'line-dasharray': [2, 2], 'line-opacity': 0.8 } },
+                    { id: 'place_labels', type: 'symbol', source: 'china', 'source-layer': 'place_labels', minzoom: 3, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 12, 8, 16, 12, 22] }, paint: { 'text-color': '#333', 'text-halo-color': '#fff', 'text-halo-width': 2 } },
+                    { id: 'bridges', type: 'line', source: 'china', 'source-layer': 'bridges', minzoom: 12, paint: { 'line-color': '#c9a86a', 'line-width': 2 } },
+                    { id: 'ferries', type: 'line', source: 'china', 'source-layer': 'ferries', minzoom: 8, paint: { 'line-color': '#6a9bd4', 'line-width': 1, 'line-dasharray': [3, 2] } },
+                    { id: 'street_polygons', type: 'fill', source: 'china', 'source-layer': 'street_polygons', minzoom: 11, paint: { 'fill-color': '#f5f5f0' } },
+                    { id: 'streets', type: 'line', source: 'china', 'source-layer': 'streets', minzoom: 10, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 3] } },
+                    { id: 'street_labels', type: 'symbol', source: 'china', 'source-layer': 'street_labels', minzoom: 10, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11, 'symbol-placement': 'line', 'text-rotation-alignment': 'map' }, paint: { 'text-color': '#666', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'public_transport', type: 'symbol', source: 'china', 'source-layer': 'public_transport', minzoom: 11, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11 }, paint: { 'text-color': '#666', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'buildings', type: 'fill', source: 'china', 'source-layer': 'buildings', minzoom: 14, paint: { 'fill-color': '#d6d2c4', 'fill-opacity': 0.7 } },
+                    { id: 'pois', type: 'symbol', source: 'china', 'source-layer': 'pois', minzoom: 14, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 10 }, paint: { 'text-color': '#666', 'text-halo-color': '#fff', 'text-halo-width': 1 } }
+                ]
+            },
+            center: [114.50, 38.04],
+            zoom: 11
+        });
+        
+        map.on('load', () => {
+            console.log('✅ 地图加载成功');
+            renderLayerPanel();
+            
+            layerConfig.forEach(layer => {
+                if (!layer.alwaysOn) {
+                    try {
+                        layerVisibility[layer.id] = map.getLayoutProperty(layer.id, 'visibility') !== 'none';
+                    } catch (e) {
+                        layerVisibility[layer.id] = true;
+                    }
+                }
+            });
+        });
+        
+        map.on('error', (e) => {
+            console.error('❌ 错误:', e.error);
+            document.getElementById('status').innerHTML = '<span class="status" style="color:#ef4444">❌ ' + e.error.message + '</span>';
+        });
+        
+        map.on('data', (e) => {
+            if (e.dataType === 'source' && e.sourceId === 'china') {
+                tileCount++;
+                document.getElementById('tiles').textContent = tileCount;
+            }
+        });
+        
+        map.on('zoom', () => {
+            document.getElementById('zoom').textContent = map.getZoom().toFixed(2);
+            const center = map.getCenter();
+            document.getElementById('center').textContent = `${center.lng.toFixed(2)}, ${center.lat.toFixed(2)}`;
+        });
+        
+        // 地图点击事件（用于路径规划选点）
+        map.on('click', (e) => {
+            if (routeSelecting) {
+                const coord = `${e.lngLat.lng.toFixed(4)}, ${e.lngLat.lat.toFixed(4)}`;
+                document.getElementById(`route-${routeSelecting}`).value = coord;
+                
+                if (routeSelecting === 'start') {
+                    routeStart = [e.lngLat.lng, e.lngLat.lat];
+                } else {
+                    routeEnd = [e.lngLat.lng, e.lngLat.lat];
+                }
+                
+                routeSelecting = null;
+                document.getElementById('btn-route').classList.remove('active');
+                
+                // 添加标记
+                addRouteMarker(e.lngLat, routeSelecting === 'start' ? '起点' : '终点');
+            }
+        });
+        
+        map.addControl(new maplibregl.NavigationControl());
+        map.addControl(new maplibregl.ScaleControl());
+        
+        // ==================== 图层控制 ====================
+        
+        function renderLayerPanel() {
+            const container = document.getElementById('layer-list');
+            container.innerHTML = categories.map(cat => {
+                const layers = cat.ids.map(id => layerConfig.find(l => l.id === id)).filter(l => l);
+                return `
+                    <div class="layer-category">
+                        <div class="layer-category-title">
+                            <span class="emoji">${cat.emoji}</span>
+                            ${cat.name} (${layers.length})
+                        </div>
+                        ${layers.map(layer => `
+                            <div class="layer-item ${layer.alwaysOn ? 'disabled' : ''}">
+                                <input type="checkbox" 
+                                       id="chk-${layer.id}" 
+                                       ${layer.alwaysOn ? 'checked disabled' : 'checked'} 
+                                       onchange="toggleLayer('${layer.id}')">
+                                <label for="chk-${layer.id}">
+                                    <span>${layer.name}</span>
+                                    <span class="layer-zoom">z${layer.zoom}</span>
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('layer-count').textContent = layerConfig.length;
+        }
+        
+        window.toggleLayer = function(layerId) {
+            const checkbox = document.getElementById(`chk-${layerId}`);
+            const visible = checkbox.checked;
+            layerVisibility[layerId] = visible;
+            
+            try {
+                const style = map.getStyle();
+                const layerExists = style.layers.some(l => l.id === layerId);
+                
+                if (!layerExists) {
+                    checkbox.checked = !visible;
+                    layerVisibility[layerId] = !visible;
+                    return;
+                }
+                
+                map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
+            } catch (e) {
+                checkbox.checked = !visible;
+                layerVisibility[layerId] = !visible;
+            }
+        };
+        
+        window.toggleAll = function(show) {
+            layerConfig.forEach(layer => {
+                if (!layer.alwaysOn) {
+                    const checkbox = document.getElementById(`chk-${layer.id}`);
+                    if (checkbox) {
+                        checkbox.checked = show;
+                        layerVisibility[layer.id] = show;
+                        try {
+                            map.setLayoutProperty(layer.id, 'visibility', show ? 'visible' : 'none');
+                        } catch (e) {}
+                    }
+                }
+            });
+        };
+        
+        // ==================== 搜索功能 ====================
+        
+        window.handleSearchKey = function(event) {
+            if (event.key === 'Enter') {
+                doSearch();
+            }
+        };
+        
+        window.doSearch = function() {
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) return;
+            
+            const results = placeData.filter(place => 
+                place.name.includes(query) || place.address.includes(query)
+            );
+            
+            const resultsDiv = document.getElementById('search-results');
+            if (results.length === 0) {
+                resultsDiv.classList.remove('show');
+                alert('未找到相关地点');
+                return;
+            }
+            
+            resultsDiv.innerHTML = results.map(place => `
+                <div class="search-result-item" onclick="selectPlace(${place.lng}, ${place.lat}, '${place.name}')">
+                    <div class="name">${place.name}</div>
+                    <div class="address">${place.address}</div>
+                </div>
+            `).join('');
+            
+            resultsDiv.classList.add('show');
+        };
+        
+        window.selectPlace = function(lng, lat, name) {
+            flyTo(lng, lat, 12);
+            document.getElementById('search-results').classList.remove('show');
+            document.getElementById('search-input').value = name;
+            
+            // 添加标记
+            new maplibregl.Marker({ color: '#e74c3c' })
+                .setLngLat([lng, lat])
+                .setPopup(new maplibregl.Popup().setHTML(`<strong>${name}</strong>`))
+                .addTo(map);
+        };
+        
+        // ==================== 路径规划 ====================
+        
+        window.togglePanel = function(panelId) {
+            const panel = document.getElementById(panelId);
+            const isShown = panel.classList.contains('show');
+            
+            // 隐藏所有面板
+            document.querySelectorAll('.route-panel').forEach(p => p.classList.remove('show'));
+            
+            if (!isShown) {
+                panel.classList.add('show');
+            }
+        };
+        
+        window.setRoutePoint = function(type) {
+            routeSelecting = type;
+            document.getElementById('btn-route').classList.add('active');
+            alert(`请在地图上点击选择${type === 'start' ? '起点' : '终点'}`);
+        };
+        
+        window.setRouteMode = function(mode) {
+            routeMode = mode;
+            document.querySelectorAll('#mode-driving, #mode-walking, #mode-cycling').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`mode-${mode}`).classList.add('active');
+        };
+        
+        window.addRouteMarker = function(lngLat, label) {
+            new maplibregl.Marker({ color: label === '起点' ? '#22c55e' : '#e74c3c' })
+                .setLngLat(lngLat)
+                .setPopup(new maplibregl.Popup().setHTML(`<strong>${label}</strong>`))
+                .addTo(map);
+        };
+        
+        window.calculateRoute = function() {
+            if (!routeStart || !routeEnd) {
+                alert('请先选择起点和终点');
+                return;
+            }
+            
+            // 模拟路径规划（离线环境下使用直线距离）
+            const distance = getDistance(routeStart, routeEnd);
+            const duration = {
+                'driving': distance / 60000 * 60, // 假设 60km/h
+                'walking': distance / 80 * 60,    // 假设 5km/h
+                'cycling': distance / 20000 * 60  // 假设 20km/h
+            }[routeMode];
+            
+            // 显示结果
+            document.getElementById('route-result').classList.add('show');
+            document.getElementById('route-distance').textContent = `距离：${(distance/1000).toFixed(2)} 公里`;
+            document.getElementById('route-duration').textContent = `预计时间：${Math.round(duration)} 分钟`;
+            
+            // 绘制路线（直线）
+            drawRouteLine();
+        };
+        
+        window.drawRouteLine = function() {
+            // 移除旧路线
+            if (map.getLayer('route-line')) {
+                map.removeLayer('route-line');
+            }
+            if (map.getSource('route-source')) {
+                map.removeSource('route-source');
+            }
+            
+            // 添加新路线
+            map.addSource('route-source', {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: [routeStart, routeEnd]
+                    }
+                }
+            });
+            
+            map.addLayer({
+                id: 'route-line',
+                type: 'line',
+                source: 'route-source',
+                paint: {
+                    'line-color': routeMode === 'driving' ? '#e74c3c' : routeMode === 'walking' ? '#22c55e' : '#f39c12',
+                    'line-width': 4,
+                    'line-dasharray': [2, 1]
+                }
+            });
+            
+            // 调整视野
+            const bounds = new maplibregl.LngLatBounds(routeStart, routeEnd);
+            map.fitBounds(bounds, { padding: 50 });
+        };
+        
+        window.clearRoute = function() {
+            routeStart = null;
+            routeEnd = null;
+            document.getElementById('route-start').value = '';
+            document.getElementById('route-end').value = '';
+            document.getElementById('route-result').classList.remove('show');
+            
+            if (map.getLayer('route-line')) {
+                map.removeLayer('route-line');
+            }
+            if (map.getSource('route-source')) {
+                map.removeSource('route-source');
+            }
+        };
+        
+        // ==================== 测量工具 ====================
+        
+        window.toggleMeasure = function(mode) {
+            if (measureMode === mode) {
+                clearMeasure();
+                return;
+            }
+            
+            clearMeasure();
+            measureMode = mode;
+            
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${mode}`).classList.add('active');
+            
+            document.getElementById('measure-result').classList.add('show');
+            document.getElementById('measure-value').textContent = mode === 'distance' ? '0 公里' : '0 平方公里';
+            
+            if (!map.getSource('measure-points')) {
+                map.addSource('measure-points', {
+                    type: 'geojson',
+                    data: { type: 'FeatureCollection', features: [] }
+                });
+                
+                map.addLayer({
+                    id: 'measure-points',
+                    type: 'circle',
+                    source: 'measure-points',
+                    paint: {
+                        'circle-radius': 6,
+                        'circle-color': '#2196f3'
+                    }
+                });
+                
+                map.addLayer({
+                    id: 'measure-line',
+                    type: 'line',
+                    source: 'measure-points',
+                    layout: { 'line-join': 'round', 'line-cap': 'round' },
+                    paint: {
+                        'line-color': '#2196f3',
+                        'line-width': 3,
+                        'line-dasharray': [2, 2]
+                    }
+                });
+                
+                map.addLayer({
+                    id: 'measure-polygon',
+                    type: 'fill',
+                    source: 'measure-points',
+                    paint: {
+                        'fill-color': '#2196f3',
+                        'fill-opacity': 0.2
+                    }
+                });
+            }
+            
+            map.on('click', handleMeasureClick);
+            map.on('dblclick', handleMeasureDblClick);
+            map.getCanvas().style.cursor = 'crosshair';
+        };
+        
+        function handleMeasureClick(e) {
+            measurePoints.push([e.lngLat.lng, e.lngLat.lat]);
+            updateMeasureLayer();
+            calculateMeasure();
+        }
+        
+        function handleMeasureDblClick(e) {
+            if (measurePoints.length >= 2) {
+                calculateMeasure();
+            }
+        }
+        
+        function updateMeasureLayer() {
+            if (!map.getSource('measure-points')) return;
+            
+            const features = measurePoints.map(point => ({
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: point }
+            }));
+            
+            if (measurePoints.length >= 2) {
+                const lineFeature = {
+                    type: 'Feature',
+                    geometry: { type: 'LineString', coordinates: measurePoints }
+                };
+                features.push(lineFeature);
+                
+                if (measureMode === 'area' && measurePoints.length >= 3) {
+                    const closedPoints = [...measurePoints, measurePoints[0]];
+                    const polygonFeature = {
+                        type: 'Feature',
+                        geometry: { type: 'Polygon', coordinates: [closedPoints] }
+                    };
+                    features.push(polygonFeature);
+                }
+            }
+            
+            map.getSource('measure-points').setData({
+                type: 'FeatureCollection',
+                features: features
+            });
+        }
+        
+        function calculateMeasure() {
+            if (measurePoints.length < 2) return;
+            
+            let result = 0;
+            
+            if (measureMode === 'distance') {
+                for (let i = 1; i < measurePoints.length; i++) {
+                    result += getDistance(measurePoints[i-1], measurePoints[i]);
+                }
+                document.getElementById('measure-value').textContent = 
+                    result >= 1000 ? `${(result/1000).toFixed(2)} 公里` : `${result.toFixed(0)} 米`;
+            } else if (measureMode === 'area') {
+                if (measurePoints.length >= 3) {
+                    const closedPoints = [...measurePoints, measurePoints[0]];
+                    result = getArea(closedPoints);
+                    document.getElementById('measure-value').textContent = 
+                        result >= 1000000 ? `${(result/1000000).toFixed(2)} 平方公里` : `${(result/10000).toFixed(2)} 公顷`;
+                }
+            }
+        }
+        
+        window.clearMeasure = function() {
+            measureMode = null;
+            measurePoints = [];
+            
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('measure-result').classList.remove('show');
+            
+            if (map.getSource('measure-points')) {
+                map.getSource('measure-points').setData({
+                    type: 'FeatureCollection',
+                    features: []
+                });
+            }
+            
+            map.off('click', handleMeasureClick);
+            map.off('dblclick', handleMeasureDblClick);
+            map.getCanvas().style.cursor = '';
+        };
+        
+        window.exportMeasure = function() {
+            if (measurePoints.length < 2) {
+                alert('没有可导出的测量数据');
+                return;
+            }
+            
+            const data = {
+                mode: measureMode,
+                points: measurePoints,
+                timestamp: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `measurement-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+        
+        // ==================== CAD 功能 ====================
+        
+        window.handleCadFileSelect = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const fileName = file.name;
+                
+                // 解析文件
+                let geojsonData;
+                if (fileName.endsWith('.svg')) {
+                    geojsonData = parseSVG(content);
+                } else if (fileName.endsWith('.geojson') || fileName.endsWith('.json')) {
+                    geojsonData = JSON.parse(content);
+                } else if (fileName.endsWith('.dxf')) {
+                    geojsonData = parseDXF(content);
+                }
+                
+                if (geojsonData) {
+                    addCadLayer(geojsonData, fileName);
+                }
+            };
+            reader.readAsText(file);
+        };
+        
+        window.parseSVG = function(svgContent) {
+            // 简化的 SVG 解析（实际项目中需要更完整的解析）
+            const parser = new DOMParser();
+            const svg = parser.parseFromString(svgContent, 'image/svg+xml');
+            const paths = svg.querySelectorAll('path');
+            
+            const coordinates = [];
+            paths.forEach(path => {
+                const d = path.getAttribute('d');
+                // 简化的路径解析
+                const matches = d.match(/M\s*([\d.]+)[,\s]+([\d.]+)/g);
+                if (matches) {
+                    matches.forEach(m => {
+                        const nums = m.match(/[\d.]+/g);
+                        if (nums && nums.length >= 2) {
+                            coordinates.push([parseFloat(nums[0]), parseFloat(nums[1])]);
+                        }
+                    });
+                }
+            });
+            
+            if (coordinates.length > 0) {
+                return {
+                    type: 'FeatureCollection',
+                    features: [{
+                        type: 'Feature',
+                        geometry: {
+                            type: coordinates.length > 2 ? 'Polygon' : 'LineString',
+                            coordinates: coordinates.length > 2 ? [coordinates] : coordinates
+                        }
+                    }]
+                };
+            }
+            
+            return null;
+        };
+        
+        window.parseDXF = function(dxfContent) {
+            // 简化的 DXF 解析（实际项目需要完整解析器）
+            console.log('DXF 解析需要完整实现');
+            return null;
+        };
+        
+        window.addCadLayer = function(geojsonData, fileName) {
+            const layerId = `cad-${Date.now()}`;
+            
+            // 添加源
+            map.addSource(layerId, {
+                type: 'geojson',
+                data: geojsonData
+            });
+            
+            // 添加图层
+            const layerConfig = {
+                id: layerId,
+                type: 'line',
+                source: layerId,
+                paint: {
+                    'line-color': document.getElementById('cad-line-color').value,
+                    'line-width': parseInt(document.getElementById('cad-line-width').value),
+                    'line-opacity': parseFloat(document.getElementById('cad-opacity').value)
+                }
+            };
+            
+            map.addLayer(layerConfig);
+            
+            cadLayers.push({ id: layerId, name: fileName, data: geojsonData });
+            currentCadLayer = layerId;
+            
+            // 更新 UI
+            updateCadFileList();
+            document.getElementById('cad-settings').style.display = 'block';
+            
+            // 居中显示
+            centerCadLayer();
+        };
+        
+        window.updateCadFileList = function() {
+            const list = document.getElementById('cad-file-list');
+            list.innerHTML = cadLayers.map((layer, index) => `
+                <div class="cad-file-item" onclick="selectCadLayer('${layer.id}')">
+                    <span class="name">📄 ${layer.name}</span>
+                    <div class="actions">
+                        <button onclick="event.stopPropagation(); removeCadLayerById('${layer.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        };
+        
+        window.selectCadLayer = function(layerId) {
+            currentCadLayer = layerId;
+            document.getElementById('cad-settings').style.display = 'block';
+        };
+        
+        window.updateCadStyle = function() {
+            if (!currentCadLayer) return;
+            
+            const color = document.getElementById('cad-line-color').value;
+            const width = parseInt(document.getElementById('cad-line-width').value);
+            const opacity = parseFloat(document.getElementById('cad-opacity').value);
+            
+            map.setPaintProperty(currentCadLayer, 'line-color', color);
+            map.setPaintProperty(currentCadLayer, 'line-width', width);
+            map.setPaintProperty(currentCadLayer, 'line-opacity', opacity);
+        };
+        
+        window.centerCadLayer = function() {
+            if (!currentCadLayer) return;
+            
+            const source = map.getSource(currentCadLayer);
+            if (!source) return;
+            
+            const data = source._data;
+            if (!data || !data.features || data.features.length === 0) return;
+            
+            const coords = data.features[0].geometry.coordinates;
+            let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+            
+            coords.forEach(coord => {
+                if (Array.isArray(coord[0])) {
+                    coord[0].forEach(c => {
+                        minLng = Math.min(minLng, c[0]);
+                        minLat = Math.min(minLat, c[1]);
+                        maxLng = Math.max(maxLng, c[0]);
+                        maxLat = Math.max(maxLat, c[1]);
+                    });
+                } else {
+                    minLng = Math.min(minLng, coord[0]);
+                    minLat = Math.min(minLat, coord[1]);
+                    maxLng = Math.max(maxLng, coord[0]);
+                    maxLat = Math.max(maxLat, coord[1]);
+                }
+            });
+            
+            const bounds = new maplibregl.LngLatBounds([minLng, minLat], [maxLng, maxLat]);
+            map.fitBounds(bounds, { padding: 50 });
+        };
+        
+        window.removeCadLayer = function() {
+            if (!currentCadLayer) return;
+            removeCadLayerById(currentCadLayer);
+        };
+        
+        window.removeCadLayerById = function(layerId) {
+            if (map.getLayer(layerId)) {
+                map.removeLayer(layerId);
+            }
+            if (map.getSource(layerId)) {
+                map.removeSource(layerId);
+            }
+            
+            cadLayers = cadLayers.filter(l => l.id !== layerId);
+            currentCadLayer = cadLayers.length > 0 ? cadLayers[0].id : null;
+            
+            updateCadFileList();
+            
+            if (!currentCadLayer) {
+                document.getElementById('cad-settings').style.display = 'none';
+            }
+        };
+        
+        window.loadSampleCad = function() {
+            fetch('/离线地图项目/test-building.svg')
+                .then(res => res.text())
+                .then(content => {
+                    const geojsonData = parseSVG(content);
+                    if (geojsonData) {
+                        addCadLayer(geojsonData, 'test-building.svg');
+                    }
+                })
+                .catch(err => {
+                    alert('加载示例文件失败：' + err.message);
+                });
+        };
+        
+        // ==================== 书签功能 ====================
+        
+        window.toggleBookmarks = function() {
+            // 简单实现：添加当前位置为书签
+            const center = map.getCenter();
+            const zoom = map.getZoom();
+            const name = prompt('书签名称:', `位置 ${center.lng.toFixed(2)}, ${center.lat.toFixed(2)}`);
+            
+            if (name) {
+                bookmarks.push({
+                    name: name,
+                    lng: center.lng,
+                    lat: center.lat,
+                    zoom: zoom,
+                    created: new Date().toISOString()
+                });
+                localStorage.setItem('map-bookmarks', JSON.stringify(bookmarks));
+                alert(`已添加书签：${name}`);
+            }
+        };
+        
+        // ==================== 主题切换 ====================
+        
+        window.toggleTheme = function() {
+            darkMode = !darkMode;
+            
+            if (darkMode) {
+                document.getElementById('theme-icon').textContent = '☀️';
+                document.getElementById('theme-text').textContent = '日间';
+                document.body.style.background = '#1a1a2e';
+                document.querySelectorAll('.panel').forEach(p => {
+                    p.style.background = '#16213e';
+                    p.style.color = '#eee';
+                });
+            } else {
+                document.getElementById('theme-icon').textContent = '🌙';
+                document.getElementById('theme-text').textContent = '夜间';
+                document.body.style.background = '#f5f5f5';
+                document.querySelectorAll('.panel').forEach(p => {
+                    p.style.background = 'white';
+                    p.style.color = '#333';
+                });
+            }
+        };
+        
+        // ==================== 工具函数 ====================
+        
+        function getDistance(point1, point2) {
+            const R = 6371000;
+            const lat1 = point1[1] * Math.PI / 180;
+            const lat2 = point2[1] * Math.PI / 180;
+            const deltaLat = (point2[1] - point1[1]) * Math.PI / 180;
+            const deltaLon = (point2[0] - point1[0]) * Math.PI / 180;
+            
+            const a = Math.sin(deltaLat/2) * Math.sin(deltaLat/2) +
+                      Math.cos(lat1) * Math.cos(lat2) *
+                      Math.sin(deltaLon/2) * Math.sin(deltaLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            
+            return R * c;
+        }
+        
+        function getArea(points) {
+            let area = 0;
+            const R = 6371000;
+            
+            for (let i = 0; i < points.length - 1; i++) {
+                const lon1 = points[i][0] * Math.PI / 180;
+                const lon2 = points[i+1][0] * Math.PI / 180;
+                const lat1 = points[i][1] * Math.PI / 180;
+                const lat2 = points[i+1][1] * Math.PI / 180;
+                
+                area += (lon2 - lon1) * (2 + Math.sin(lat1) + Math.sin(lat2));
+            }
+            
+            return Math.abs(area * R * R / 2);
+        }
+        
+        window.toggleRoadStyles = function() {
+            roadStylesEnhanced = !roadStylesEnhanced;
+            
+            if (roadStylesEnhanced) {
+                const layers = [
+                    { id: 'motorway', filter: ['==', 'kind', 'motorway'], color: '#e74c3c', minzoom: 10, width: [10, 1, 12, 2, 14, 4, 16, 8] },
+                    { id: 'trunk', filter: ['in', 'kind', 'trunk', 'trunk_link'], color: '#e67e22', minzoom: 10, width: [10, 0.8, 12, 1.5, 14, 3, 16, 6] },
+                    { id: 'primary', filter: ['in', 'kind', 'primary', 'primary_link'], color: '#f39c12', minzoom: 10, width: [10, 0.6, 12, 1, 14, 2, 16, 4] },
+                    { id: 'secondary', filter: ['in', 'kind', 'secondary', 'secondary_link'], color: '#f1c40f', minzoom: 11, width: [11, 0.5, 13, 1, 15, 2, 17, 3] },
+                    { id: 'tertiary', filter: ['in', 'kind', 'tertiary', 'tertiary_link'], color: '#1abc9c', minzoom: 11, width: [11, 0.4, 13, 0.8, 15, 1.5] },
+                    { id: 'residential', filter: ['==', 'kind', 'residential'], color: '#95a5a6', minzoom: 12, width: [12, 0.3, 14, 0.8, 16, 1.5] },
+                    { id: 'service', filter: ['==', 'kind', 'service'], color: '#bdc3c7', minzoom: 13, width: [13, 0.2, 15, 0.6] }
+                ];
+                
+                try {
+                    const style = map.getStyle();
+                    style.layers.forEach(layer => {
+                        if (layer.id.startsWith('streets-')) {
+                            map.removeLayer(layer.id);
+                        }
+                    });
+                } catch (e) {}
+                
+                layers.forEach(cfg => {
+                    try {
+                        map.addLayer({
+                            id: `streets-${cfg.id}`,
+                            type: 'line',
+                            source: 'china',
+                            'source-layer': 'streets',
+                            minzoom: cfg.minzoom,
+                            filter: cfg.filter,
+                            paint: {
+                                'line-color': cfg.color,
+                                'line-width': ['interpolate', ['linear'], ['zoom'], ...cfg.width]
+                            }
+                        }, 'street_labels');
+                    } catch (e) {
+                        console.warn(`添加图层 streets-${cfg.id} 失败:`, e.message);
+                    }
+                });
+                
+                try {
+                    map.setLayoutProperty('streets', 'visibility', 'none');
+                } catch (e) {}
+                
+                console.log('✅ 道路样式已增强');
+            } else {
+                try {
+                    const style = map.getStyle();
+                    style.layers.forEach(layer => {
+                        if (layer.id.startsWith('streets-')) {
+                            map.removeLayer(layer.id);
+                        }
+                    });
+                    map.setLayoutProperty('streets', 'visibility', 'visible');
+                } catch (e) {}
+                
+                console.log('✅ 道路样式已恢复');
+            }
+        };
+        
+        console.log('✅ 地图初始化完成');
+    </script>
+</body>
+</html>

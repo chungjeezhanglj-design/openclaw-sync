@@ -1,0 +1,141 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中国地势三级阶梯示意图</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f8fafc;
+    --fg: #172033;
+    --muted: #5b6475;
+    --line: #64748b;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+  main {
+    max-width: 1040px;
+    margin: 28px auto;
+    padding: 0 20px;
+  }
+  svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .title { font-size: 22px; font-weight: 700; fill: var(--fg); }
+  .subtitle { font-size: 13px; fill: var(--muted); }
+  .axis-label { font-size: 13px; font-weight: 600; fill: var(--muted); }
+  .step-name { font-size: 17px; font-weight: 700; fill: var(--fg); }
+  .step-detail { font-size: 12px; fill: var(--muted); }
+  .bound-label {
+    font-size: 11.5px;
+    fill: #b91c1c;
+    font-weight: 700;
+  }
+  .dir-label { font-size: 14px; font-weight: 700; }
+  .footer { font-size: 12px; fill: var(--muted); font-style: italic; }
+
+  .step1 { fill: #cbd5e1; stroke: #475569; stroke-width: 1.5; }
+  .step2 { fill: #fde68a; stroke: #a16207; stroke-width: 1.5; }
+  .step3 { fill: #bbf7d0; stroke: #15803d; stroke-width: 1.5; }
+
+  .cliff {
+    stroke: #334155;
+    stroke-width: 2;
+    fill: none;
+    stroke-dasharray: 5 4;
+  }
+  .baseline {
+    stroke: #2563eb;
+    stroke-width: 1.8;
+  }
+  .sea-label { font-size: 13px; font-weight: 600; fill: #2563eb; }
+</style>
+<main>
+<svg viewBox="0 0 1040 620" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1040" height="620" fill="#f8fafc" />
+
+  <!-- Title block -->
+  <text x="520" y="38" text-anchor="middle" class="title">中国地势：三级阶梯（自西向东依次降低）</text>
+  <text x="520" y="62" text-anchor="middle" class="subtitle">
+    China Terrain — Three Descending Steps from West to East
+  </text>
+
+  <!-- Y-axis elevation labels -->
+  <text x="70" y="148" text-anchor="end" class="axis-label">4000 m +</text>
+  <text x="70" y="298" text-anchor="end" class="axis-label">1000 – 2000 m</text>
+  <text x="70" y="448" text-anchor="end" class="axis-label">&lt; 500 m</text>
+  <text x="70" y="510" text-anchor="end" class="axis-label">0 m</text>
+
+  <!-- Sea level baseline -->
+  <line x1="90" y1="500" x2="1000" y2="500" class="baseline" />
+  <text x="1010" y="505" class="sea-label">海平面</text>
+
+  <!-- ============== STEP 1: Tibetan Plateau ============== -->
+  <rect x="120" y="125" width="290" height="65" class="step1" rx="4" />
+  <!-- mountain icons inside (subtle texture) -->
+  <polyline points="135,175 145,165 155,175 165,160 175,175 185,168 195,175 210,162 225,175 240,170 255,175 270,165 285,175 300,170 315,175 330,168 345,175 360,170 375,175 390,165 400,175"
+            fill="none" stroke="#64748b" stroke-width="1" />
+  <text x="265" y="152" text-anchor="middle" class="step-name">第一级阶梯</text>
+  <text x="265" y="170" text-anchor="middle" class="step-name">青藏高原 · 柴达木盆地</text>
+
+  <!-- Cliff 1: Kunlun – Qilian – Hengduan -->
+  <line x1="410" y1="125" x2="410" y2="285" class="cliff" />
+  <polygon points="404,132 416,132 410,118" fill="#b91c1c" />
+  <polygon points="404,278 416,278 410,292" fill="#b91c1c" />
+  <text
+    x="420"
+    y="205"
+    class="bound-label"
+    transform="rotate(-90 420 205)"
+    text-anchor="middle"
+  >
+    昆仑山 — 祁连山 — 横断山脉
+  </text>
+
+  <!-- ============== STEP 2: Northern Plateaus ============== -->
+  <rect x="410" y="285" width="330" height="65" class="step2" rx="4" />
+  <polyline points="425,335 435,325 445,335 460,320 475,335 495,322 515,335 540,318 560,335 585,325 610,335 640,322 670,335 695,328 720,335"
+            fill="none" stroke="#92400e" stroke-width="1" />
+  <text x="575" y="312" text-anchor="middle" class="step-name">第二级阶梯</text>
+  <text x="575" y="330" text-anchor="middle" class="step-name">内蒙古高原 · 黄土高原 · 四川盆地 · 云贵高原</text>
+
+  <!-- Cliff 2: Daxing'anling – Taihang – Wushan – Xuefeng -->
+  <line x1="740" y1="285" x2="740" y2="435" class="cliff" />
+  <polygon points="734,292 746,292 740,278" fill="#b91c1c" />
+  <polygon points="734,428 746,428 740,442" fill="#b91c1c" />
+  <text
+    x="750"
+    y="360"
+    class="bound-label"
+    transform="rotate(-90 750 360)"
+    text-anchor="middle"
+  >
+    大兴安岭 — 太行山 — 巫山 — 雪峰山
+  </text>
+
+  <!-- ============== STEP 3: Eastern Plains ============== -->
+  <rect x="740" y="435" width="260" height="65" class="step3" rx="4" />
+  <polyline points="755,485 765,478 775,485 790,480 805,485 820,478 835,485 855,480 875,485 895,478 915,485 935,480 955,485 975,478 990,485"
+            fill="none" stroke="#166534" stroke-width="1" />
+  <text x="870" y="462" text-anchor="middle" class="step-name">第三级阶梯</text>
+  <text x="870" y="480" text-anchor="middle" class="step-name">东北平原 · 华北平原 · 长江中下游平原</text>
+
+  <!-- West / East direction indicators -->
+  <line x1="160" y1="545" x2="940" y2="545" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3" />
+  <polygon points="940,540 952,545 940,550" fill="#64748b" />
+  <text x="150" y="555" text-anchor="middle" class="dir-label" fill="#7c2d12">▲ 西</text>
+  <text x="965" y="555" text-anchor="middle" class="dir-label" fill="#1e40af">东 ▼</text>
+
+  <!-- Footer note -->
+  <text x="520" y="595" text-anchor="middle" class="footer">
+    阶梯交界处落差大 → 水能资源丰富（三峡、二滩、龙羊峡等水电站集中分布）
+  </text>
+</svg>
+</main>

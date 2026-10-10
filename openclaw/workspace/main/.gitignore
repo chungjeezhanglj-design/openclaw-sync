@@ -1,0 +1,7 @@
+# backups
+*.bak
+*.bak.*
+*.bak.pre-*
+
+# tmp / secrets
+webhooks-smoke.secret

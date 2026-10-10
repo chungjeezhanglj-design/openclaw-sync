@@ -1,0 +1,604 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.5.12",
+    "lastTouchedAt": "2026-05-15T00:05:30.147Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-05-09T05:09:33.831Z",
+    "lastRunVersion": "2026.5.7",
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
+  },
+  "update": {
+    "channel": "stable",
+    "auto": {
+      "enabled": true
+    },
+    "checkOnStart": true
+  },
+  "ui": {
+    "assistant": {
+      "name": "aiDy"
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "openrouter": {
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "OPENROUTER_API_KEY"
+        },
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "tencent/hy3-preview:free",
+            "name": "Tencent: Hy3 preview (free)",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 8192
+          }
+        ]
+      },
+      "apple-foundation": {
+        "baseUrl": "http://127.0.0.1:3000/v1",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "apple-foundationmodel",
+            "name": "Apple Foundation Model (on-device)",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0
+            },
+            "contextWindow": 4096,
+            "maxTokens": 4096
+          }
+        ]
+      },
+      "minimax": {
+        "baseUrl": "https://api.minimaxi.com/anthropic",
+        "models": [
+          {
+            "id": "MiniMax-M2.7",
+            "name": "MiniMax M2.7",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0.3,
+              "output": 1.2,
+              "cacheRead": 0.06,
+              "cacheWrite": 0.375
+            },
+            "contextWindow": 204800,
+            "maxTokens": 131072
+          }
+        ],
+        "api": "anthropic-messages",
+        "authHeader": true
+      },
+      "skillclaw": {
+        "api": "openai-completions",
+        "baseUrl": "http://127.0.0.1:30000/v1",
+        "apiKey": "skillclaw",
+        "models": [
+          {
+            "id": "skillclaw-model",
+            "name": "skillclaw-model",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 32768,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "skillclaw/skillclaw-model",
+        "fallbacks": [
+          "apple-foundation/apple-foundationmodel",
+          "openrouter/tencent/hy3-preview:free"
+        ]
+      },
+      "models": {
+        "openrouter/tencent/hy3-preview:free": {},
+        "apple-foundation/apple-foundationmodel": {"alias": "local-apfel"},
+        "minimax/MiniMax-M2.7": {
+          "alias": "Minimax"
+        }
+      },
+      "workspace": "/Users/zhanglj/openclaw/workspace",
+      "compaction": {
+        "mode": "safeguard",
+        "reserveTokensFloor": 20000
+      },
+      "contextInjection": "always",
+      "bootstrapMaxChars": 20000,
+      "bootstrapTotalMaxChars": 150000,
+      "heartbeat": {
+        "every": "0m"
+      },
+      "sandbox": {
+        "mode": "off"
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "default": true
+      },
+      {
+        "id": "codex",
+        "model": "minimax/MiniMax-M2.7"
+      },
+      {
+        "id": "yuanbao-group",
+        "workspace": "/Users/zhanglj/.openclaw/workspace-group"
+      }
+    ]
+  },
+  "tools": {
+    "agentToAgent": {
+      "enabled": true
+    },
+    "web": {
+      "fetch": {}
+    },
+    "exec": {
+      "ask": "off",
+      "safeBins": [
+        "ls",
+        "cat",
+        "which",
+        "head",
+        "tail",
+        "grep",
+        "find",
+        "pwd",
+        "echo",
+        "wc",
+        "sort",
+        "uniq",
+        "date",
+        "du",
+        "stat",
+        "basename",
+        "dirname",
+        "tr",
+        "cut",
+        "awk",
+        "sed",
+        "xargs",
+        "tee",
+        "touch",
+        "mkdir",
+        "cp",
+        "mv",
+        "ln",
+        "file",
+        "diff",
+        "comm",
+        "curl",
+        "wget",
+        "jq"
+      ],
+      "safeBinProfiles": {
+        "basename": {},
+        "cat": {},
+        "comm": {},
+        "cp": {},
+        "curl": {},
+        "cut": {},
+        "date": {},
+        "diff": {},
+        "dirname": {},
+        "du": {},
+        "echo": {},
+        "file": {},
+        "find": {},
+        "grep": {},
+        "head": {},
+        "jq": {},
+        "ln": {},
+        "ls": {},
+        "mkdir": {},
+        "mv": {},
+        "pwd": {},
+        "sort": {},
+        "stat": {},
+        "tail": {},
+        "tee": {},
+        "touch": {},
+        "tr": {},
+        "uniq": {},
+        "wc": {},
+        "wget": {},
+        "which": {},
+        "xargs": {}
+      }
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "channels": {
+    "feishu": {
+      "enabled": true,
+      "defaultAccount": "main",
+      "accounts": {
+        "main": {
+          "appId": "cli_a928103a04781bef",
+          "appSecret": "0iwT2Sh0VUj8XfJv7xR2ChTQZZxDb5po"
+        },
+        "default": {
+          "webhookPath": "/feishu/events",
+          "dmPolicy": "pairing",
+          "groupPolicy": "allowlist"
+        }
+      },
+      "domain": "feishu",
+      "connectionMode": "websocket",
+      "webhookPath": "/feishu/events",
+      "dmPolicy": "pairing",
+      "groupPolicy": "allowlist",
+      "reactionNotifications": "own",
+      "typingIndicator": true,
+      "resolveSenderNames": true
+    },
+    "synology-chat": {
+      "enabled": true,
+      "token": "mpMvTxinJK0NrbkL4T9tPRkl8FzNgk5s5rqXPt2zAuLb5U1W9u0qhjuxpDXZFNa6",
+      "incomingUrl": "https://192.168.1.141:50003/webapi/entry.cgi?api=SYNO.Chat.External&method=chatbot&version=2&token=%22mpMvTxinJK0NrbkL4T9tPRkl8FzNgk5s5rqXPt2zAuLb5U1W9u0qhjuxpDXZFNa6%22"
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "controlUi": {
+      "allowedOrigins": [
+        "http://localhost:18789",
+        "http://127.0.0.1:18789",
+        "http://192.168.1.102:18789",
+        "https://192.168.1.102:18789"
+      ],
+      "embedSandbox": "scripts",
+      "allowExternalEmbedUrls": false
+    },
+    "auth": {
+      "mode": "token",
+      "token": "536e51c05e18ae5757c541261a736cee4b3dd0f8a1334455",
+      "rateLimit": {
+        "maxAttempts": 10,
+        "windowMs": 60000,
+        "lockoutMs": 300000
+      }
+    },
+    "nodes": {
+      "allowCommands": [
+        "sms.list",
+        "sms.get",
+        "sms.send"
+      ]
+    }
+  },
+  "plugins": {
+    "allow": [
+      "feishu",
+      "memory-core",
+      "openrouter",
+      "minimax",
+      "openclaw-plugin-yuanbao",
+      "synology-chat"
+    ],
+    "entries": {
+      "feishu": {
+        "enabled": true,
+        "config": {}
+      },
+      "vllm": {
+        "enabled": false
+      },
+      "memory-core": {
+        "config": {
+          "dreaming": {
+            "enabled": false
+          }
+        },
+        "enabled": true
+      },
+      "openrouter": {
+        "enabled": true
+      },
+      "minimax": {
+        "enabled": true
+      },
+      "openclaw-plugin-yuanbao": {
+        "enabled": true
+      }
+    },
+    "bundledDiscovery": "compat"
+  },
+  "skills": {
+    "entries": {
+      "remotion": {
+        "enabled": false
+      },
+      "tuanziguardianclaw": {
+        "enabled": false
+      },
+      "1password": {
+        "enabled": false
+      },
+      "apple-notes": {
+        "enabled": false
+      },
+      "apple-reminders": {
+        "enabled": false
+      },
+      "bear-notes": {
+        "enabled": false
+      },
+      "blogwatcher": {
+        "enabled": false
+      },
+      "blucli": {
+        "enabled": false
+      },
+      "bluebubbles": {
+        "enabled": false
+      },
+      "camsnap": {
+        "enabled": false
+      },
+      "discord": {
+        "enabled": false
+      },
+      "gemini": {
+        "enabled": false
+      },
+      "eightctl": {
+        "enabled": false
+      },
+      "gog": {
+        "enabled": false
+      },
+      "goplaces": {
+        "enabled": false
+      },
+      "imsg": {
+        "enabled": false
+      },
+      "model-usage": {
+        "enabled": false
+      },
+      "notion": {
+        "enabled": false
+      },
+      "openai-whisper": {
+        "enabled": false
+      },
+      "openai-whisper-api": {
+        "enabled": false
+      },
+      "openhue": {
+        "enabled": false
+      },
+      "oracle": {
+        "enabled": false
+      },
+      "sag": {
+        "enabled": false
+      },
+      "sonoscli": {
+        "enabled": false
+      },
+      "spotify-player": {
+        "enabled": false
+      },
+      "wacli": {
+        "enabled": false
+      },
+      "xurl": {
+        "enabled": false
+      },
+      "wecom-contact-lookup": {
+        "enabled": false
+      },
+      "wecom-doc-manager": {
+        "enabled": false
+      },
+      "wecom-edit-todo": {
+        "enabled": false
+      },
+      "wecom-get-todo-detail": {
+        "enabled": false
+      },
+      "wecom-get-todo-list": {
+        "enabled": false
+      },
+      "wecom-meeting-create": {
+        "enabled": false
+      },
+      "wecom-meeting-manage": {
+        "enabled": false
+      },
+      "wecom-meeting-query": {
+        "enabled": false
+      },
+      "wecom-preflight": {
+        "enabled": false
+      },
+      "wecom-schedule": {
+        "enabled": false
+      },
+      "wecom-smartsheet-data": {
+        "enabled": false
+      },
+      "wecom-smartsheet-schema": {
+        "enabled": false
+      },
+      "last30days": {
+        "enabled": false
+      },
+      "apple-intelligence": {
+        "enabled": false
+      },
+      "tmux": {
+        "enabled": false
+      },
+      "voice-call": {
+        "enabled": false
+      },
+      "things-mac": {
+        "enabled": false
+      },
+      "trello": {
+        "enabled": false
+      },
+      "ordercli": {
+        "enabled": false
+      },
+      "songsee": {
+        "enabled": false
+      },
+      "clawhub": {
+        "enabled": false
+      },
+      "coding-agent": {
+        "enabled": false
+      },
+      "gifgrep": {
+        "enabled": false
+      },
+      "himalaya": {
+        "enabled": false
+      },
+      "nano-pdf": {
+        "enabled": false
+      },
+      "obsidian": {
+        "enabled": true
+      },
+      "sherpa-onnx-tts": {
+        "enabled": false
+      },
+      "slack": {
+        "enabled": false
+      },
+      "gh-issues": {
+        "enabled": false
+      },
+      "healthcheck": {
+        "enabled": false
+      },
+      "node-connect": {
+        "enabled": false
+      },
+      "weather": {
+        "enabled": false
+      },
+      "feishu-wiki": {
+        "enabled": false
+      },
+      "taskflow-inbox-triage": {
+        "enabled": false
+      },
+      "taskflow": {
+        "enabled": false
+      },
+      "moss-tts-voice": {
+        "enabled": false
+      }
+    },
+    "install": {
+      "nodeManager": "npm"
+    }
+  },
+  "cli": {
+    "banner": {
+      "taglineMode": "off"
+    }
+  },
+  "auth": {
+    "profiles": {
+      "nvidia:default": {
+        "provider": "nvidia",
+        "mode": "api_key"
+      },
+      "minimax:cn": {
+        "provider": "minimax",
+        "mode": "api_key"
+      }
+    }
+  },
+  "messages": {
+    "tts": {
+      "auto": "always",
+      "provider": "sherpa-onnx",
+      "providers": {
+        "sherpa-onnx": {
+          "command": "/Users/zhanglj/openclaw/workspace/bin/sherpa-onnx-tts-cli",
+          "args": [
+            "-o",
+            "{{OutputPath}}",
+            "{{Text}}"
+          ],
+          "outputFormat": "wav",
+          "timeoutMs": 120000,
+          "env": {
+            "SHERPA_ONNX_RUNTIME_DIR": "/Users/zhanglj/.openclaw/tools/sherpa-onnx-tts/runtime",
+            "SHERPA_ONNX_MODEL_DIR": "/Users/zhanglj/.openclaw/tools/sherpa-onnx-tts/models/vits-zh-aishell3/vits-zh-aishell3"
+          }
+        }
+      }
+    },
+    "groupChat": {
+      "visibleReplies": "message_tool"
+    }
+  },
+  "bindings": [
+    {
+      "agentId": "yuanbao-group",
+      "match": {
+        "channel": "yuanbao",
+        "accountId": "*",
+        "peer": {
+          "kind": "group",
+          "id": "*"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+[main/sessions/main/42e180a1-680a-4bf3-9511-80aa22e15ebd.jsonl#L2] Assistant: 在的，JackLee 👋 （这条是显式补发的，刚才那条普通 reply 估计被 dispatcher 吞了） 今天想折腾点什么？
+[main/sessions/main/42e180a1-680a-4bf3-9511-80aa22e15ebd.jsonl#L3] Assistant: 好，1 收到 ✅ 接下来我每条回复都走 message 工具显式发到 synology-chat:4，你照常聊就行。普通 reply 路径暂时弃用。 直到你选 2 修好之前，这个 workaround 会一直生效。
+[main/sessions/main/6c8b5eaa-e142-4b78-b229-84e3290f9141.jsonl#L6] Assistant: 在的，JackLee 👋 今天想折腾点什么？
+[main/sessions/main/6c8b5eaa-e142-4b78-b229-84e3290f9141.jsonl#L7] User: 我收不到回复了
+[main/sessions/main/6c8b5eaa-e142-4b78-b229-84e3290f9141.jsonl#L8] Assistant: 抱歉！上一条你没收到，那就是 dispatcher 又出问题了。我用 `message` 工具显式补发： 我先补发刚才那条消息，再排查一下网关状态。
+[main/sessions/main/6c8b5eaa-e142-4b78-b229-84e3290f9141.jsonl#L12] Assistant: ✅ 补发成功（messageId `sc-1785303908525`），你现在应该能看到"在的，JackLee 👋"那条了。 📋 排查结论： - 网关健康、synology-chat 通道 ON / configured - 但日志里 13:42 / 13:44 两次普通 reply 只看到 `Agent reply started`，**没有 dispatch/send 完成日志**——dispatcher 确实没把回复投出去 - 之前 2026-07-09 观察的"原生 synology-chat session 

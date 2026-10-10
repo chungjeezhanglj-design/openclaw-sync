@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>🗺️ CAD 文件显示 - 中国离线地图</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; width: 100%; overflow: hidden; }
+        #map { height: 100%; width: 100%; }
+        
+        .panel {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            padding: 15px;
+        }
+        
+        .info-panel {
+            top: 10px;
+            left: 10px;
+            width: 280px;
+        }
+        
+        .info-panel h3 {
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .info-panel p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .layer-panel {
+            top: 10px;
+            right: 10px;
+            width: 300px;
+            max-height: calc(100vh - 20px);
+            overflow-y: auto;
+        }
+        
+        .layer-panel h3 {
+            font-size: 15px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .layer-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        
+        .layer-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+        }
+        
+        .layer-item label {
+            flex: 1;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        
+        .layer-item .color-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            margin-left: 10px;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .status {
+            font-weight: bold;
+        }
+        
+        .status.ok { color: #22c55e; }
+        .status.error { color: #f44336; }
+    </style>
+    <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <!-- 信息面板 -->
+    <div class="panel info-panel">
+        <h3>🗺️ CAD 文件显示</h3>
+        <p><strong>状态：</strong><span id="status" class="status">加载中...</span></p>
+        <p><strong>文件：</strong><span id="fileCount">0</span> 个</p>
+        <p><strong>要素：</strong><span id="featureCount">0</span> 个</p>
+        <p><strong>Zoom：</strong><span id="zoom">-</span></p>
+        <button class="btn btn-primary" onclick="window.open('upload-cad.html', '_blank')">
+            📤 上传新文件
+        </button>
+        <button class="btn btn-danger" onclick="clearAll()">
+            🗑️ 清除所有
+        </button>
+    </div>
+    
+    <!-- 图层面板 -->
+    <div class="panel layer-panel" id="layerPanel">
+        <h3>📋 图层列表</h3>
+        <div id="layerList">
+            <!-- 动态生成 -->
+        </div>
+    </div>
+    
+    <script>
+        let map;
+        let uploadedLayers = [];
+        let layerSettings = {};
+        
+        // 初始化地图
+        function initMap() {
+            map = new maplibregl.Map({
+                container: 'map',
+                style: {
+                    version: 8,
+                    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+                    sources: {
+                        'china': {
+                            type: 'vector',
+                            tiles: ['http://localhost:8083/{z}/{x}/{y}.pbf'],
+                            minzoom: 0,
+                            maxzoom: 14
+                        }
+                    },
+                    layers: [
+                        { id: 'background', type: 'background', paint: { 'background-color': '#f5f5f0' } },
+                        { id: 'land', type: 'fill', source: 'china', 'source-layer': 'land', minzoom: 7, paint: { 'fill-color': '#e0d8c8' } },
+                        { id: 'water', type: 'fill', source: 'china', 'source-layer': 'water_polygons', minzoom: 4, paint: { 'fill-color': '#8fb8e8' } }
+                    ]
+                },
+                center: [114.50, 38.04],
+                zoom: 12
+            });
+            
+            map.on('load', () => {
+                loadUploadedData();
+            });
+            
+            map.on('zoom', () => {
+                document.getElementById('zoom').textContent = map.getZoom().toFixed(2);
+            });
+            
+            map.addControl(new maplibregl.NavigationControl());
+            map.addControl(new maplibregl.ScaleControl());
+        }
+        
+        // 加载上传的数据
+        function loadUploadedData() {
+            const geojsonStr = localStorage.getItem('cadUploadGeoJSON');
+            const styleStr = localStorage.getItem('cadUploadStyle');
+            
+            if (!geojsonStr) {
+                document.getElementById('status').innerHTML = '<span class="status error">❌ 没有上传的数据</span>';
+                document.getElementById('status').style.color = '#f44336';
+                return;
+            }
+            
+            try {
+                const geojson = JSON.parse(geojsonStr);
+                const style = styleStr ? JSON.parse(styleStr) : {
+                    lineColor: '#9b59b6',
+                    lineWidth: 2,
+                    fillColor: '#9b59b6',
+                    opacity: 0.8
+                };
+                
+                // 添加到地图
+                addGeoJSONToMap(geojson, style);
+                
+                // 更新 UI
+                document.getElementById('status').innerHTML = '<span class="status ok">✅ 已加载</span>';
+                document.getElementById('fileCount').textContent = '1';
+                document.getElementById('featureCount').textContent = geojson.features.length;
+                
+                // 更新图层列表
+                updateLayerList(geojson.features.length, style);
+                
+                // 自动缩放到数据范围
+                fitToData(geojson);
+                
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                document.getElementById('status').innerHTML = '<span class="status error">❌ 加载失败</span>';
+            }
+        }
+        
+        // 添加 GeoJSON 到地图
+        function addGeoJSONToMap(geojson, style) {
+            const sourceId = 'cad-upload';
+            
+            // 添加数据源
+            map.addSource(sourceId, {
+                type: 'geojson',
+                data: geojson
+            });
+            
+            // 添加线图层
+            map.addLayer({
+                id: `${sourceId}-line`,
+                type: 'line',
+                source: sourceId,
+                paint: {
+                    'line-color': style.lineColor,
+                    'line-width': style.lineWidth,
+                    'line-opacity': style.opacity
+                }
+            });
+            
+            // 添加填充图层（针对多边形）
+            map.addLayer({
+                id: `${sourceId}-fill`,
+                type: 'fill',
+                source: sourceId,
+                paint: {
+                    'fill-color': style.fillColor,
+                    'fill-opacity': style.opacity * 0.3
+                }
+            });
+            
+            uploadedLayers.push({
+                id: sourceId,
+                name: '上传的 CAD 文件',
+                type: 'geojson',
+                featureCount: geojson.features.length
+            });
+        }
+        
+        // 更新图层列表
+        function updateLayerList(featureCount, style) {
+            const layerList = document.getElementById('layerList');
+            
+            layerList.innerHTML = `
+                <div class="layer-item">
+                    <input type="checkbox" id="chk-cad-line" checked onchange="toggleLayer('cad-upload-line', this.checked)">
+                    <label for="chk-cad-line">CAD 线条</label>
+                    <div class="color-preview" style="background: ${style.lineColor}"></div>
+                </div>
+                <div class="layer-item">
+                    <input type="checkbox" id="chk-cad-fill" checked onchange="toggleLayer('cad-upload-fill', this.checked)">
+                    <label for="chk-cad-fill">CAD 填充</label>
+                    <div class="color-preview" style="background: ${style.fillColor}"></div>
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px; font-size: 12px;">
+                    <strong>统计：</strong><br>
+                    要素数：${featureCount}<br>
+                    线宽：${style.lineWidth}px<br>
+                    透明度：${Math.round(style.opacity * 100)}%
+                </div>
+            `;
+        }
+        
+        // 切换图层显示
+        window.toggleLayer = function(layerIdSuffix, visible) {
+            try {
+                const lineLayer = map.getLayer(`cad-upload-${layerIdSuffix}`);
+                if (lineLayer) {
+                    map.setLayoutProperty(`cad-upload-${layerIdSuffix}`, 'visibility', visible ? 'visible' : 'none');
+                }
+            } catch (error) {
+                console.error('切换图层失败:', error);
+            }
+        };
+        
+        // 自动缩放到数据范围
+        function fitToData(geojson) {
+            const bounds = new maplibregl.LngLatBounds();
+            
+            geojson.features.forEach(feature => {
+                const coords = feature.geometry.coordinates;
+                
+                function processCoord(coord) {
+                    if (typeof coord[0] === 'number') {
+                        bounds.extend(coord);
+                    } else {
+                        coord.forEach(c => processCoord(c));
+                    }
+                }
+                
+                processCoord(coords);
+            });
+            
+            if (!bounds.isEmpty()) {
+                map.fitBounds(bounds, { padding: 50 });
+            }
+        }
+        
+        // 清除所有
+        window.clearAll = function() {
+            if (confirm('确定要清除所有上传的数据吗？')) {
+                localStorage.removeItem('cadUploadGeoJSON');
+                localStorage.removeItem('cadUploadStyle');
+                localStorage.removeItem('cadUploadSettings');
+                
+                // 移除图层
+                uploadedLayers.forEach(layer => {
+                    try {
+                        if (map.getLayer(`${layer.id}-line`)) {
+                            map.removeLayer(`${layer.id}-line`);
+                        }
+                        if (map.getLayer(`${layer.id}-fill`)) {
+                            map.removeLayer(`${layer.id}-fill`);
+                        }
+                        if (map.getSource(layer.id)) {
+                            map.removeSource(layer.id);
+                        }
+                    } catch (error) {
+                        console.error('移除图层失败:', error);
+                    }
+                });
+                
+                uploadedLayers = [];
+                document.getElementById('fileCount').textContent = '0';
+                document.getElementById('featureCount').textContent = '0';
+                document.getElementById('layerList').innerHTML = '<p style="color: #999; font-size: 13px;">暂无图层</p>';
+                document.getElementById('status').innerHTML = '<span class="status">已清除</span>';
+            }
+        };
+        
+        // 初始化
+        initMap();
+    </script>
+</body>
+</html>

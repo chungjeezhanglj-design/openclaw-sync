@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+snapshot.json
+boards_state/
+reports/
+.venv/
+.DS_Store
+radar-launchd.log
+radar-cron.log
+config.yaml
+web/

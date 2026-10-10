@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>🗺️ 中国离线地图 - 完整图层控制版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; width: 100%; overflow: hidden; }
+        #map { height: 100%; width: 100%; }
+        
+        /* 图层控制面板 */
+        .layer-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 340px;
+            max-height: calc(100vh - 20px);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .layer-panel-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        }
+        
+        .layer-panel-header h3 {
+            font-size: 15px;
+            color: #333;
+            margin: 0;
+        }
+        
+        .layer-panel-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .layer-panel-actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .layer-panel-actions button:hover {
+            background: #f0f0f0;
+        }
+        
+        .layer-panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .layer-category {
+            margin-bottom: 15px;
+        }
+        
+        .layer-category-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .layer-category-title .emoji { font-size: 14px; }
+        
+        .layer-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+        
+        .layer-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .layer-item label {
+            flex: 1;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .layer-zoom {
+            font-size: 11px;
+            color: #999;
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .layer-item.disabled {
+            opacity: 0.5;
+        }
+        
+        .layer-item.disabled label {
+            cursor: not-allowed;
+        }
+        
+        /* 信息面板 */
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 280px;
+        }
+        
+        .info-panel h3 {
+            margin: 0 0 10px;
+            font-size: 15px;
+        }
+        
+        .info-panel p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .status { font-weight: bold; }
+        .status.ok { color: #22c55e; }
+        .status.loading { color: #f59e0b; }
+        
+        /* 滚动条样式 */
+        .layer-panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .layer-panel-content::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+        
+        .layer-panel-content::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+        
+        /* 日志输出 */
+        .log-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #0f0;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            max-width: 400px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+    <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <!-- 信息面板 -->
+    <div class="info-panel">
+        <h3>🗺️ 中国离线地图</h3>
+        <p><strong>状态：</strong><span id="status" class="status loading">加载中...</span></p>
+        <p><strong>Zoom：</strong><span id="zoom">-</span></p>
+        <p><strong>中心：</strong><span id="center">-</span></p>
+        <p><strong>瓦片：</strong><span id="tiles">0</span></p>
+        <p><strong>图层：</strong><span id="layer-count">0</span> 个</p>
+        <button onclick="toggleLog()" style="margin-top:8px;padding:5px 10px;font-size:12px;cursor:pointer">显示/隐藏日志</button>
+    </div>
+    
+    <!-- 图层控制面板 -->
+    <div class="layer-panel">
+        <div class="layer-panel-header">
+            <h3>🎨 图层控制 (26 个)</h3>
+            <div class="layer-panel-actions">
+                <button onclick="toggleAll(true)">全选</button>
+                <button onclick="toggleAll(false)">取消</button>
+            </div>
+        </div>
+        <div class="layer-panel-content" id="layer-list">
+            <!-- 图层列表由 JS 生成 -->
+        </div>
+    </div>
+    
+    <!-- 日志面板 -->
+    <div class="log-panel" id="log-panel"></div>
+    
+    <script>
+        // 所有图层配置（26 个完整图层）- 按样式中定义的顺序
+        const layerConfig = [
+            { id: 'background', name: '背景色', zoom: '0-14', alwaysOn: true },
+            { id: 'land', name: '陆地', zoom: '7-14' },
+            { id: 'ocean', name: '海洋', zoom: '8-14' },
+            { id: 'water_polygons', name: '水体（面）', zoom: '4-14' },
+            { id: 'water_lines', name: '水系（线）', zoom: '4-14' },
+            { id: 'water_lines_labels', name: '水系标注', zoom: '4-14' },
+            { id: 'dam_lines', name: '堤坝（线）', zoom: '12-14' },
+            { id: 'dam_polygons', name: '堤坝（面）', zoom: '12-14' },
+            { id: 'pier_lines', name: '码头（线）', zoom: '12-14' },
+            { id: 'pier_polygons', name: '码头（面）', zoom: '12-14' },
+            { id: 'boundaries', name: '边界线', zoom: '0-14' },
+            { id: 'boundary_labels', name: '边界标注', zoom: '2-14' },
+            { id: 'china-boundary', name: '国界 (DataV)', zoom: '0-14' },
+            { id: 'china-province', name: '省界 (DataV)', zoom: '0-14' },
+            { id: 'place_labels', name: '地名标注', zoom: '3-14' },
+            { id: 'addresses', name: '地址门牌', zoom: '14' },
+            { id: 'bridges', name: '桥梁', zoom: '12-14' },
+            { id: 'ferries', name: '渡轮线路', zoom: '8-14' },
+            { id: 'aerialways', name: '缆车索道', zoom: '12-14' },
+            { id: 'street_polygons', name: '道路（面）', zoom: '11-14' },
+            { id: 'streets_polygons_labels', name: '道路区域标注', zoom: '14' },
+            { id: 'streets', name: '道路（线）', zoom: '14' },
+            { id: 'street_labels', name: '道路标注', zoom: '10-14' },
+            { id: 'street_labels_points', name: '道路点标注', zoom: '12-14' },
+            { id: 'public_transport', name: '公共交通', zoom: '11-14' },
+            { id: 'buildings', name: '建筑物', zoom: '14' },
+            { id: 'sites', name: '场所', zoom: '14' },
+            { id: 'pois', name: '兴趣点', zoom: '14' }
+        ];
+        
+        // 按类别分组
+        const categories = [
+            { name: '基础', emoji: '🌍', ids: ['background', 'land', 'ocean'] },
+            { name: '水系', emoji: '💧', ids: ['water_polygons', 'water_lines', 'water_lines_labels', 'dam_lines', 'dam_polygons', 'pier_lines', 'pier_polygons'] },
+            { name: '边界', emoji: '🚩', ids: ['boundaries', 'boundary_labels', 'china-boundary', 'china-province'] },
+            { name: '居民地', emoji: '🏙️', ids: ['place_labels', 'addresses'] },
+            { name: '道路', emoji: '🛣️', ids: ['bridges', 'ferries', 'aerialways', 'street_polygons', 'streets_polygons_labels', 'streets', 'street_labels', 'street_labels_points'] },
+            { name: '交通', emoji: '🚉', ids: ['public_transport'] },
+            { name: '建筑', emoji: '🏢', ids: ['buildings', 'sites'] },
+            { name: '兴趣点', emoji: '📍', ids: ['pois'] }
+        ];
+        
+        let tileCount = 0;
+        let map;
+        let layerVisibility = {};
+        let showLog = false;
+        
+        // 日志功能
+        function log(msg, type = 'info') {
+            const panel = document.getElementById('log-panel');
+            const time = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : '#0f0';
+            panel.innerHTML += `<div style="color:${color}">[${time}] ${msg}</div>`;
+            panel.scrollTop = panel.scrollHeight;
+            console.log(msg);
+        }
+        
+        window.toggleLog = function() {
+            showLog = !showLog;
+            document.getElementById('log-panel').style.display = showLog ? 'block' : 'none';
+        };
+        
+        // 生成图层控制面板
+        function renderLayerPanel() {
+            const container = document.getElementById('layer-list');
+            container.innerHTML = categories.map(cat => {
+                const layers = cat.ids.map(id => layerConfig.find(l => l.id === id)).filter(l => l);
+                return `
+                    <div class="layer-category">
+                        <div class="layer-category-title">
+                            <span class="emoji">${cat.emoji}</span>
+                            ${cat.name} (${layers.length})
+                        </div>
+                        ${layers.map(layer => `
+                            <div class="layer-item ${layer.alwaysOn ? 'disabled' : ''}">
+                                <input type="checkbox" 
+                                       id="chk-${layer.id}" 
+                                       ${layer.alwaysOn ? 'checked disabled' : 'checked'} 
+                                       onchange="toggleLayer('${layer.id}')">
+                                <label for="chk-${layer.id}">
+                                    <span>${layer.name}</span>
+                                    <span class="layer-zoom">z${layer.zoom}</span>
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('layer-count').textContent = layerConfig.length;
+        }
+        
+        // 切换图层可见性
+        window.toggleLayer = function(layerId) {
+            const checkbox = document.getElementById(`chk-${layerId}`);
+            const visible = checkbox.checked;
+            layerVisibility[layerId] = visible;
+            
+            try {
+                // 检查图层是否存在
+                const style = map.getStyle();
+                const layerExists = style.layers.some(l => l.id === layerId);
+                
+                if (!layerExists) {
+                    log(`❌ 图层 ${layerId} 不存在`, 'error');
+                    checkbox.checked = !visible;
+                    layerVisibility[layerId] = !visible;
+                    return;
+                }
+                
+                // 切换可见性
+                map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
+                log(`✅ ${layerId}: ${visible ? '显示' : '隐藏'}`, 'success');
+            } catch (e) {
+                log(`❌ ${layerId}: ${e.message}`, 'error');
+                checkbox.checked = !visible;
+                layerVisibility[layerId] = !visible;
+            }
+        };
+        
+        // 全选/取消全选
+        window.toggleAll = function(show) {
+            log(`📋 ${show ? '全选' : '取消全选'}`);
+            layerConfig.forEach(layer => {
+                if (!layer.alwaysOn) {
+                    const checkbox = document.getElementById(`chk-${layer.id}`);
+                    if (checkbox) {
+                        checkbox.checked = show;
+                        layerVisibility[layer.id] = show;
+                        try {
+                            map.setLayoutProperty(layer.id, 'visibility', show ? 'visible' : 'none');
+                        } catch (e) {
+                            // 忽略
+                        }
+                    }
+                }
+            });
+        };
+        
+        // 初始化地图
+        log('🚀 开始加载地图...');
+        
+        map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+                sources: {
+                    'china': {
+                        type: 'vector',
+                        tiles: ['http://localhost:8083/{z}/{x}/{y}.pbf'],
+                        minzoom: 0,
+                        maxzoom: 14
+                    },
+                    'china-boundary': {
+                        type: 'geojson',
+                        data: '/离线地图项目/data/boundaries/china-national.geojson'
+                    },
+                    'china-province': {
+                        type: 'geojson',
+                        data: '/离线地图项目/data/boundaries/china-provinces.geojson'
+                    }
+                },
+                layers: [
+                    { id: 'background', type: 'background', paint: { 'background-color': '#f5f5f0' } },
+                    { id: 'land', type: 'fill', source: 'china', 'source-layer': 'land', minzoom: 7, paint: { 'fill-color': '#e0d8c8' } },
+                    { id: 'ocean', type: 'fill', source: 'china', 'source-layer': 'ocean', minzoom: 8, paint: { 'fill-color': '#a8d5e8' } },
+                    { id: 'water_polygons', type: 'fill', source: 'china', 'source-layer': 'water_polygons', minzoom: 4, paint: { 'fill-color': '#8fb8e8' } },
+                    { id: 'water_lines', type: 'line', source: 'china', 'source-layer': 'water_lines', minzoom: 4, paint: { 'line-color': '#6a9bd4', 'line-width': 1.5 } },
+                    { id: 'water_lines_labels', type: 'symbol', source: 'china', 'source-layer': 'water_lines_labels', minzoom: 4, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11 }, paint: { 'text-color': '#5a8bc4', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'dam_lines', type: 'line', source: 'china', 'source-layer': 'dam_lines', minzoom: 12, paint: { 'line-color': '#c9a86a', 'line-width': 2 } },
+                    { id: 'dam_polygons', type: 'fill', source: 'china', 'source-layer': 'dam_polygons', minzoom: 12, paint: { 'fill-color': '#d9c88a' } },
+                    { id: 'pier_lines', type: 'line', source: 'china', 'source-layer': 'pier_lines', minzoom: 12, paint: { 'line-color': '#c9a86a', 'line-width': 1 } },
+                    { id: 'pier_polygons', type: 'fill', source: 'china', 'source-layer': 'pier_polygons', minzoom: 12, paint: { 'fill-color': '#d9c88a' } },
+                    { id: 'boundaries', type: 'line', source: 'china', 'source-layer': 'boundaries', minzoom: 0, paint: { 'line-color': '#c73e3e', 'line-width': 2, 'line-dasharray': [2, 1] } },
+                    { id: 'boundary_labels', type: 'symbol', source: 'china', 'source-layer': 'boundary_labels', minzoom: 2, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11 }, paint: { 'text-color': '#888', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'china-boundary', type: 'line', source: 'china-boundary', paint: { 'line-color': '#e74c3c', 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 3, 12, 4], 'line-opacity': 0.9 } },
+                    { id: 'china-province', type: 'line', source: 'china-province', paint: { 'line-color': '#e67e22', 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 1.5, 10, 2, 14, 3], 'line-dasharray': [4, 2], 'line-opacity': 0.8 } },
+                    { id: 'place_labels', type: 'symbol', source: 'china', 'source-layer': 'place_labels', minzoom: 3, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 12, 8, 16, 12, 22] }, paint: { 'text-color': '#333', 'text-halo-color': '#fff', 'text-halo-width': 2 } },
+                    { id: 'addresses', type: 'symbol', source: 'china', 'source-layer': 'addresses', minzoom: 14, layout: { 'text-field': ['concat', ['get', 'housenumber'], ' ', ['get', 'housename']], 'text-font': ['Noto Sans Regular'], 'text-size': 10 }, paint: { 'text-color': '#666', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'bridges', type: 'line', source: 'china', 'source-layer': 'bridges', minzoom: 12, paint: { 'line-color': '#c9a86a', 'line-width': 2 } },
+                    { id: 'ferries', type: 'line', source: 'china', 'source-layer': 'ferries', minzoom: 8, paint: { 'line-color': '#6a9bd4', 'line-width': 1, 'line-dasharray': [3, 2] } },
+                    { id: 'aerialways', type: 'line', source: 'china', 'source-layer': 'aerialways', minzoom: 12, paint: { 'line-color': '#a86ac9', 'line-width': 1, 'line-dasharray': [4, 2] } },
+                    { id: 'street_polygons', type: 'fill', source: 'china', 'source-layer': 'street_polygons', minzoom: 11, paint: { 'fill-color': '#f5f5f0' } },
+                    { id: 'streets_polygons_labels', type: 'symbol', source: 'china', 'source-layer': 'streets_polygons_labels', minzoom: 14, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11 }, paint: { 'text-color': '#666', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'streets', type: 'line', source: 'china', 'source-layer': 'streets', minzoom: 14, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 2, 16, 8] } },
+                    { id: 'street_labels', type: 'symbol', source: 'china', 'source-layer': 'street_labels', minzoom: 10, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11, 'symbol-placement': 'line', 'text-rotation-alignment': 'map' }, paint: { 'text-color': '#666', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'street_labels_points', type: 'symbol', source: 'china', 'source-layer': 'street_labels_points', minzoom: 12, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 10 }, paint: { 'text-color': '#666', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'public_transport', type: 'symbol', source: 'china', 'source-layer': 'public_transport', minzoom: 11, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11 }, paint: { 'text-color': '#666', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'buildings', type: 'fill', source: 'china', 'source-layer': 'buildings', minzoom: 14, paint: { 'fill-color': '#d6d2c4', 'fill-opacity': 0.7 } },
+                    { id: 'sites', type: 'fill', source: 'china', 'source-layer': 'sites', minzoom: 14, paint: { 'fill-color': '#e8e0d0' } },
+                    { id: 'pois', type: 'symbol', source: 'china', 'source-layer': 'pois', minzoom: 14, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 10 }, paint: { 'text-color': '#666', 'text-halo-color': '#fff', 'text-halo-width': 1 } }
+                ]
+            },
+            center: [104.11, 33.96],
+            zoom: 4
+        });
+        
+        map.on('load', () => {
+            log('✅ 地图加载成功', 'success');
+            document.getElementById('status').innerHTML = '<span class="status ok">✅ 正常运行</span>';
+            
+            // 初始化图层状态
+            const style = map.getStyle();
+            log(`📊 地图包含 ${style.layers.length} 个图层`);
+            
+            style.layers.forEach(layer => {
+                log(`  - ${layer.id}`);
+            });
+            
+            renderLayerPanel();
+            
+            // 初始化所有图层状态
+            layerConfig.forEach(layer => {
+                if (!layer.alwaysOn) {
+                    try {
+                        const visible = map.getLayoutProperty(layer.id, 'visibility') !== 'none';
+                        layerVisibility[layer.id] = visible;
+                    } catch (e) {
+                        layerVisibility[layer.id] = true;
+                    }
+                }
+            });
+        });
+        
+        map.on('error', (e) => {
+            log(`❌ 错误：${e.error.message}`, 'error');
+            document.getElementById('status').innerHTML = '<span class="status error">❌ ' + e.error.message + '</span>';
+        });
+        
+        map.on('data', (e) => {
+            if (e.dataType === 'source' && e.sourceId === 'china') {
+                tileCount++;
+                document.getElementById('tiles').textContent = tileCount;
+            }
+        });
+        
+        map.on('zoom', () => {
+            document.getElementById('zoom').textContent = map.getZoom().toFixed(2);
+            const center = map.getCenter();
+            document.getElementById('center').textContent = `${center.lng.toFixed(2)}, ${center.lat.toFixed(2)}`;
+        });
+        
+        map.addControl(new maplibregl.NavigationControl());
+        map.addControl(new maplibregl.ScaleControl());
+        
+        log('✅ 地图初始化完成');
+    </script>
+</body>
+</html>

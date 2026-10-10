@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>🗺️ 中国离线地图 - 路径规划版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; width: 100%; overflow: hidden; }
+        #map { height: 100%; width: 100%; }
+        
+        .toolbar {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            gap: 10px;
+        }
+        
+        .search-box { display: flex; align-items: center; gap: 8px; }
+        .search-box input { width: 300px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .search-box button { padding: 8px 16px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .search-box button:hover { background: #1976d2; }
+        
+        .toolbar-btn {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .toolbar-btn:hover { background: #f5f5f5; }
+        .toolbar-btn.active { background: #e3f2fd; border-color: #2196f3; }
+        
+        .panel {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            overflow: hidden;
+            max-height: calc(100vh - 100px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .panel-header h3 { font-size: 14px; color: #333; margin: 0; }
+        .panel-content { padding: 10px; overflow-y: auto; flex: 1; }
+        
+        .info-panel { top: 70px; left: 10px; width: 280px; }
+        .info-panel p { margin: 5px 0; font-size: 13px; color: #666; }
+        
+        .route-panel {
+            top: 70px;
+            left: 300px;
+            width: 400px;
+            display: none;
+        }
+        .route-panel.show { display: flex; }
+        
+        .route-input { margin-bottom: 12px; }
+        .route-input label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; font-weight: 600; }
+        .route-input input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+        
+        .route-summary {
+            margin-top: 15px;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            color: white;
+            display: none;
+        }
+        .route-summary.show { display: block; }
+        .route-summary .distance { font-size: 20px; font-weight: bold; margin-bottom: 4px; }
+        .route-summary .duration { font-size: 14px; opacity: 0.9; }
+        
+        .route-steps { margin-top: 15px; border-top: 2px solid #eee; padding-top: 15px; }
+        .route-steps-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        
+        .step-item {
+            display: flex;
+            gap: 12px;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #2196f3;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .step-item:hover { background: #e3f2fd; transform: translateX(3px); }
+        .step-item.active { background: #e3f2fd; border-left-color: #e74c3c; }
+        
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        
+        .step-content { flex: 1; min-width: 0; }
+        .step-instruction { font-size: 13px; color: #333; margin-bottom: 4px; line-height: 1.4; }
+        .step-distance { font-size: 11px; color: #666; }
+        
+        .btn-group { display: flex; gap: 5px; margin-top: 10px; }
+        .btn-group button {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-group button.active { background: #2196f3; color: white; border-color: #2196f3; }
+        
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1001;
+        }
+        .search-results.show { display: block; }
+        .search-result-item { padding: 10px 12px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
+        .search-result-item:hover { background: #f5f5f5; }
+        .search-result-item .name { font-weight: 600; color: #333; margin-bottom: 3px; }
+        .search-result-item .address { font-size: 11px; color: #999; }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+        .loading::before {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ddd;
+            border-top-color: #2196f3;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="toolbar">
+        <div class="search-box" style="position: relative;">
+            <input type="text" id="search-input" placeholder="🔍 搜索地名、地址..." onkeyup="handleSearchKey(event)">
+            <button onclick="doSearch()">搜索</button>
+            <div class="search-results" id="search-results"></div>
+        </div>
+        <button class="toolbar-btn" onclick="togglePanel('route-panel')" id="btn-route">
+            <span>🛣️</span><span>路径规划</span>
+        </button>
+    </div>
+    
+    <div class="panel info-panel">
+        <div class="panel-header"><h3>🗺️ 中国离线地图</h3></div>
+        <div class="panel-content">
+            <p><strong>状态：</strong><span style="color:#22c55e">✅ 正常运行</span></p>
+            <p><strong>Zoom：</strong><span id="zoom">-</span></p>
+            <p><strong>中心：</strong><span id="center">-</span></p>
+        </div>
+    </div>
+    
+    <div class="panel route-panel" id="route-panel">
+        <div class="panel-header">
+            <h3>🛣️ 路径规划</h3>
+            <button onclick="togglePanel('route-panel')" style="background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
+        </div>
+        <div class="panel-content">
+            <div class="route-input">
+                <label>📍 起点</label>
+                <input type="text" id="route-start" placeholder="点击地图或输入坐标">
+                <button onclick="setRoutePoint('start')" style="margin-top:5px;width:100%;padding:6px;font-size:12px;">📍 在地图上选择</button>
+            </div>
+            <div class="route-input">
+                <label>🏁 终点</label>
+                <input type="text" id="route-end" placeholder="点击地图或输入坐标">
+                <button onclick="setRoutePoint('end')" style="margin-top:5px;width:100%;padding:6px;font-size:12px;">📍 在地图上选择</button>
+            </div>
+            <button onclick="calculateRoute()" style="width:100%;padding:12px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">
+                🚗 开始规划
+            </button>
+            <div class="route-summary" id="route-summary">
+                <div class="distance" id="route-distance">-</div>
+                <div class="duration" id="route-duration">-</div>
+            </div>
+            <div style="margin-top:12px;">
+                <div style="font-size:12px;color:#666;margin-bottom:8px;">规划方式：</div>
+                <div class="btn-group" style="margin-top:0;">
+                    <button onclick="setRouteMode('driving')" id="mode-driving" class="active">🚗 驾车</button>
+                    <button onclick="setRouteMode('walking')" id="mode-walking">🚶 步行</button>
+                    <button onclick="setRouteMode('cycling')" id="mode-cycling">🚴 骑行</button>
+                </div>
+            </div>
+            <div class="route-steps" id="route-steps-container" style="display:none;">
+                <div class="route-steps-title"><span>📍</span><span>导航步骤</span></div>
+                <div id="route-steps"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <script>
+        const placeData = [
+            { name: '北京', lng: 116.4, lat: 39.9, address: '北京市' },
+            { name: '上海', lng: 121.5, lat: 31.2, address: '上海市' },
+            { name: '广州', lng: 113.23, lat: 23.16, address: '广东省广州市' },
+            { name: '深圳', lng: 114.07, lat: 22.62, address: '广东省深圳市' },
+            { name: '成都', lng: 104.06, lat: 30.67, address: '四川省成都市' },
+            { name: '重庆', lng: 106.55, lat: 29.56, address: '重庆市' },
+            { name: '天津', lng: 117.2, lat: 39.08, address: '天津市' },
+            { name: '武汉', lng: 114.31, lat: 30.52, address: '湖北省武汉市' },
+            { name: '西安', lng: 108.94, lat: 34.34, address: '陕西省西安市' },
+            { name: '杭州', lng: 120.15, lat: 30.28, address: '浙江省杭州市' },
+            { name: '南京', lng: 118.78, lat: 32.06, address: '江苏省南京市' },
+            { name: '石家庄', lng: 114.50, lat: 38.04, address: '河北省石家庄市' },
+            { name: '天安门', lng: 116.397, lat: 39.908, address: '北京市东城区' },
+            { name: '故宫', lng: 116.397, lat: 39.916, address: '北京市东城区景山前街' },
+            { name: '长城', lng: 116.02, lat: 40.43, address: '北京市延庆区' },
+            { name: '东方明珠', lng: 121.499, lat: 31.239, address: '上海市浦东新区' },
+            { name: '广州塔', lng: 113.323, lat: 23.106, address: '广东省广州市海珠区' },
+            { name: '兵马俑', lng: 109.27, lat: 34.38, address: '陕西省西安市临潼区' }
+        ];
+        
+        const turnIcons = {
+            'start': '🚗', 'straight': '⬆️', 'slight-right': '↗️', 'right': '➡️',
+            'sharp-right': '↘️', 'slight-left': '↖️', 'left': '⬅️', 'sharp-left': '↙️',
+            'uturn': '🔄', 'arrive': '🏁'
+        };
+        
+        let map, routeMode = 'driving', routeSelecting = null;
+        let routeStart = null, routeEnd = null, routePath = null, routeSteps = [];
+        
+        function flyTo(lon, lat, z, duration = 1500) {
+            map.flyTo({ center: [lon, lat], zoom: z, duration: duration });
+        }
+        
+        map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+                sources: {
+                    'china': {
+                        type: 'vector',
+                        tiles: ['http://localhost:8083/{z}/{x}/{y}.pbf'],
+                        minzoom: 0, maxzoom: 14
+                    }
+                },
+                layers: [
+                    { id: 'background', type: 'background', paint: { 'background-color': '#f5f5f0' } },
+                    { id: 'land', type: 'fill', source: 'china', 'source-layer': 'land', minzoom: 7, paint: { 'fill-color': '#e0d8c8' } },
+                    { id: 'ocean', type: 'fill', source: 'china', 'source-layer': 'ocean', minzoom: 8, paint: { 'fill-color': '#a8d5e8' } },
+                    { id: 'water_polygons', type: 'fill', source: 'china', 'source-layer': 'water_polygons', minzoom: 4, paint: { 'fill-color': '#8fb8e8' } },
+                    { id: 'water_lines', type: 'line', source: 'china', 'source-layer': 'water_lines', minzoom: 4, paint: { 'line-color': '#6a9bd4', 'line-width': 1.5 } },
+                    { id: 'place_labels', type: 'symbol', source: 'china', 'source-layer': 'place_labels', minzoom: 3, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 12, 8, 16, 12, 22] }, paint: { 'text-color': '#333', 'text-halo-color': '#fff', 'text-halo-width': 2 } },
+                    { id: 'streets', type: 'line', source: 'china', 'source-layer': 'streets', minzoom: 10, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 12, 1, 14, 3] } },
+                    { id: 'street_labels', type: 'symbol', source: 'china', 'source-layer': 'street_labels', minzoom: 10, layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11, 'symbol-placement': 'line', 'text-rotation-alignment': 'map' }, paint: { 'text-color': '#666', 'text-halo-color': '#fff', 'text-halo-width': 1 } },
+                    { id: 'buildings', type: 'fill', source: 'china', 'source-layer': 'buildings', minzoom: 14, paint: { 'fill-color': '#d6d2c4', 'fill-opacity': 0.7 } }
+                ]
+            },
+            center: [114.50, 38.04],
+            zoom: 11
+        });
+        
+        map.on('load', () => console.log('✅ 地图加载成功'));
+        map.on('zoom', () => {
+            document.getElementById('zoom').textContent = map.getZoom().toFixed(2);
+            const center = map.getCenter();
+            document.getElementById('center').textContent = `${center.lng.toFixed(2)}, ${center.lat.toFixed(2)}`;
+        });
+        
+        map.on('click', (e) => {
+            if (routeSelecting) {
+                const coord = `${e.lngLat.lng.toFixed(4)}, ${e.lngLat.lat.toFixed(4)}`;
+                document.getElementById(`route-${routeSelecting}`).value = coord;
+                if (routeSelecting === 'start') routeStart = [e.lngLat.lng, e.lngLat.lat];
+                else routeEnd = [e.lngLat.lng, e.lngLat.lat];
+                routeSelecting = null;
+                document.getElementById('btn-route').classList.remove('active');
+                addRouteMarker(e.lngLat, routeSelecting === 'start' ? '起点' : '终点');
+            }
+        });
+        
+        map.addControl(new maplibregl.NavigationControl());
+        map.addControl(new maplibregl.ScaleControl());
+        
+        // 搜索功能
+        window.handleSearchKey = (event) => { if (event.key === 'Enter') doSearch(); };
+        
+        window.doSearch = () => {
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) return;
+            const results = placeData.filter(place => place.name.includes(query) || place.address.includes(query));
+            const resultsDiv = document.getElementById('search-results');
+            if (results.length === 0) {
+                resultsDiv.classList.remove('show');
+                alert('未找到相关地点');
+                return;
+            }
+            resultsDiv.innerHTML = results.map(place => `
+                <div class="search-result-item" onclick="selectPlace(${place.lng}, ${place.lat}, '${place.name}')">
+                    <div class="name">${place.name}</div>
+                    <div class="address">${place.address}</div>
+                </div>
+            `).join('');
+            resultsDiv.classList.add('show');
+        };
+        
+        window.selectPlace = (lng, lat, name) => {
+            flyTo(lng, lat, 12);
+            document.getElementById('search-results').classList.remove('show');
+            document.getElementById('search-input').value = name;
+            new maplibregl.Marker({ color: '#e74c3c' }).setLngLat([lng, lat]).setPopup(new maplibregl.Popup().setHTML(`<strong>${name}</strong>`)).addTo(map);
+        };
+        
+        // 路径规划功能
+        window.togglePanel = (panelId) => {
+            const panel = document.getElementById(panelId);
+            panel.classList.toggle('show');
+        };
+        
+        window.setRoutePoint = (type) => {
+            routeSelecting = type;
+            document.getElementById('btn-route').classList.add('active');
+            alert(`请在地图上点击选择${type === 'start' ? '起点' : '终点'}`);
+        };
+        
+        window.setRouteMode = (mode) => {
+            routeMode = mode;
+            ['driving', 'walking', 'cycling'].forEach(m => {
+                document.getElementById(`mode-${m}`).classList.toggle('active', m === mode);
+            });
+        };
+        
+        window.addRouteMarker = (lngLat, label) => {
+            const color = label === '起点' ? '#22c55e' : '#e74c3c';
+            new maplibregl.Marker({ color }).setLngLat(lngLat).setPopup(new maplibregl.Popup().setHTML(`<strong>${label}</strong>`)).addTo(map);
+        };
+        
+        function getDistance(p1, p2) {
+            const R = 6371000;
+            const lat1 = p1[1] * Math.PI / 180, lat2 = p2[1] * Math.PI / 180;
+            const dLat = (p2[1] - p1[1]) * Math.PI / 180, dLon = (p2[0] - p1[0]) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+        
+        function getBearing(p1, p2) {
+            const lat1 = p1[1] * Math.PI / 180, lat2 = p2[1] * Math.PI / 180;
+            const dLon = (p2[0] - p1[0]) * Math.PI / 180;
+            const y = Math.sin(dLon) * Math.cos(lat2);
+            const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+            return Math.degrees(Math.atan2(y, x));
+        }
+        
+        Math.degrees = (rad) => rad * 180 / Math.PI;
+        
+        function generateDetailedPath(start, end) {
+            const points = [];
+            const steps = [];
+            const distance = getDistance(start, end);
+            const bearing = getBearing(start, end);
+            
+            // 生成中间点（模拟道路弯曲）
+            const segments = Math.min(20, Math.floor(distance / 500) + 5);
+            const dLat = (end[1] - start[1]) / segments;
+            const dLon = (end[0] - start[0]) / segments;
+            
+            points.push(start);
+            for (let i = 1; i < segments; i++) {
+                const offset = Math.sin(i / segments * Math.PI) * 0.002 * (i % 2 === 0 ? 1 : -1);
+                points.push([start[0] + dLon * i + offset, start[1] + dLat * i]);
+            }
+            points.push(end);
+            
+            // 生成导航步骤
+            let cumulativeDistance = 0;
+            steps.push({ instruction: '从起点出发', distance: 0, bearing: bearing, turn: 'start' });
+            
+            for (let i = 1; i < points.length; i++) {
+                const segmentDist = getDistance(points[i-1], points[i]);
+                cumulativeDistance += segmentDist;
+                
+                if (i < points.length - 1) {
+                    const prevBearing = getBearing(points[i-1], points[i]);
+                    const nextBearing = getBearing(points[i], points[i+1]);
+                    const angleDiff = nextBearing - prevBearing;
+                    
+                    let turn = 'straight';
+                    if (angleDiff > 45) turn = 'right';
+                    if (angleDiff > 120) turn = 'sharp-right';
+                    if (angleDiff < -45) turn = 'left';
+                    if (angleDiff < -120) turn = 'sharp-left';
+                    if (Math.abs(angleDiff) > 150) turn = 'uturn';
+                    
+                    if (turn !== 'straight') {
+                        const roadNames = ['进入主干道', '进入人民路', '进入建设大街', '进入中山路', '进入裕华路', '进入二环路'];
+                        steps.push({
+                            instruction: `${getTurnInstruction(turn)}${roadNames[steps.length % roadNames.length]}`,
+                            distance: cumulativeDistance,
+                            bearing: nextBearing,
+                            turn: turn,
+                            location: points[i]
+                        });
+                    }
+                }
+            }
+            steps.push({ instruction: '到达目的地', distance: distance, bearing: bearing, turn: 'arrive' });
+            
+            return { points, steps, totalDistance: distance };
+        }
+        
+        function getTurnInstruction(turn) {
+            const instructions = {
+                'straight': '继续前行', 'slight-right': '向右前方行驶', 'right': '右转',
+                'sharp-right': '向右急转', 'slight-left': '向左前方行驶', 'left': '左转',
+                'sharp-left': '向左急转', 'uturn': '掉头'
+            };
+            return instructions[turn] || '继续';
+        }
+        
+        window.calculateRoute = () => {
+            if (!routeStart || !routeEnd) {
+                alert('请先选择起点和终点');
+                return;
+            }
+            
+            const stepsContainer = document.getElementById('route-steps-container');
+            const stepsDiv = document.getElementById('route-steps');
+            stepsContainer.style.display = 'block';
+            stepsDiv.innerHTML = '<div class="loading">正在查询真实路网...</div>';
+            
+            // 调用真实路径规划服务
+            const url = `http://localhost:8084/route?start_lng=${routeStart[0]}&start_lat=${routeStart[1]}&end_lng=${routeEnd[0]}&end_lat=${routeEnd[1]}`;
+            
+            console.log('🛣️ 请求真实路径规划:', url);
+            
+            fetch(url)
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success && result.coordinates && result.coordinates.length > 0) {
+                        // 使用真实路径
+                        routePath = result.coordinates;
+                        routeSteps = result.steps;
+                        
+                        const speed = routeMode === 'driving' ? 60000 : routeMode === 'walking' ? 5000 : 20000;
+                        const duration = result.distance / speed * 60;
+                        
+                        document.getElementById('route-summary').classList.add('show');
+                        document.getElementById('route-distance').textContent = `📍 全程 ${(result.distance/1000).toFixed(2)} 公里 (真实路网)`;
+                        document.getElementById('route-duration').textContent = `⏱️ 预计 ${Math.round(duration)} 分钟`;
+                        
+                        drawRoutePath(result.coordinates);
+                        renderRouteSteps(result.steps);
+                        
+                        const bounds = new maplibregl.LngLatBounds(routeStart, routeEnd);
+                        map.fitBounds(bounds, { padding: 50, duration: 1000 });
+                        
+                        console.log('✅ 真实路径规划成功，共', result.coordinates.length, '个点');
+                    } else {
+                        // 回退到模拟路径
+                        console.warn('⚠️ 真实路径未找到，使用模拟路径:', result.error);
+                        stepsDiv.innerHTML = `<div style="color:#f59e0b;padding:10px;">⚠️ ${result.error}，使用规划路径</div>`;
+                        
+                        setTimeout(() => {
+                            const route = generateDetailedPath(routeStart, routeEnd);
+                            routePath = route.points;
+                            routeSteps = route.steps;
+                            
+                            const speed = routeMode === 'driving' ? 60000 : routeMode === 'walking' ? 5000 : 20000;
+                            const duration = route.totalDistance / speed * 60;
+                            
+                            document.getElementById('route-summary').classList.add('show');
+                            document.getElementById('route-distance').textContent = `📍 全程 ${(route.totalDistance/1000).toFixed(2)} 公里`;
+                            document.getElementById('route-duration').textContent = `⏱️ 预计 ${Math.round(duration)} 分钟`;
+                            
+                            drawRoutePath(route.points);
+                            renderRouteSteps(route.steps);
+                            
+                            const bounds = new maplibregl.LngLatBounds(routeStart, routeEnd);
+                            map.fitBounds(bounds, { padding: 50, duration: 1000 });
+                        }, 300);
+                    }
+                })
+                .catch(err => {
+                    console.error('❌ 路径服务失败:', err.message);
+                    stepsDiv.innerHTML = '<div style="color:#f59e0b;padding:10px;">⚠️ 路径服务不可用，使用规划路径</div>';
+                    
+                    setTimeout(() => {
+                        const route = generateDetailedPath(routeStart, routeEnd);
+                        routePath = route.points;
+                        routeSteps = route.steps;
+                        
+                        const speed = routeMode === 'driving' ? 60000 : routeMode === 'walking' ? 5000 : 20000;
+                        const duration = route.totalDistance / speed * 60;
+                        
+                        document.getElementById('route-summary').classList.add('show');
+                        document.getElementById('route-distance').textContent = `📍 全程 ${(route.totalDistance/1000).toFixed(2)} 公里`;
+                        document.getElementById('route-duration').textContent = `⏱️ 预计 ${Math.round(duration)} 分钟`;
+                        
+                        drawRoutePath(route.points);
+                        renderRouteSteps(route.steps);
+                        
+                        const bounds = new maplibregl.LngLatBounds(routeStart, routeEnd);
+                        map.fitBounds(bounds, { padding: 50, duration: 1000 });
+                    }, 500);
+                });
+        };
+        
+        window.drawRoutePath = (points) => {
+            if (map.getLayer('route-path')) map.removeLayer('route-path');
+            if (map.getLayer('route-path-outline')) map.removeLayer('route-path-outline');
+            if (map.getSource('route-path-source')) map.removeSource('route-path-source');
+            
+            map.addSource('route-path-source', {
+                type: 'geojson',
+                data: { type: 'Feature', geometry: { type: 'LineString', coordinates: points } }
+            });
+            
+            map.addLayer({
+                id: 'route-path-outline',
+                type: 'line',
+                source: 'route-path-source',
+                paint: { 'line-color': '#ffffff', 'line-width': 8, 'line-opacity': 0.8 }
+            });
+            
+            map.addLayer({
+                id: 'route-path',
+                type: 'line',
+                source: 'route-path-source',
+                paint: { 'line-color': '#2196f3', 'line-width': 5, 'line-opacity': 0.9 }
+            });
+            
+            addRouteMarker({ lng: points[0][0], lat: points[0][1] }, '起点');
+            addRouteMarker({ lng: points[points.length-1][0], lat: points[points.length-1][1] }, '终点');
+        };
+        
+        window.renderRouteSteps = (steps) => {
+            const container = document.getElementById('route-steps');
+            container.innerHTML = steps.map((step, index) => `
+                <div class="step-item" onclick="highlightStep(${index})" data-step="${index}">
+                    <div class="step-icon">${turnIcons[step.turn] || '⬆️'}</div>
+                    <div class="step-content">
+                        <div class="step-instruction">${step.instruction}</div>
+                        <div class="step-distance">${step.distance > 0 ? (step.distance/1000).toFixed(2) + ' 公里' : '起点'}</div>
+                    </div>
+                </div>
+            `).join('');
+        };
+        
+        window.highlightStep = (index) => {
+            document.querySelectorAll('.step-item').forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+            const step = routeSteps[index];
+            if (step && step.location) {
+                flyTo(step.location[0], step.location[1], map.getZoom(), 800);
+            }
+        };
+        
+        window.clearRoute = () => {
+            routeStart = null; routeEnd = null; routePath = null; routeSteps = [];
+            document.getElementById('route-start').value = '';
+            document.getElementById('route-end').value = '';
+            document.getElementById('route-summary').classList.remove('show');
+            document.getElementById('route-steps-container').style.display = 'none';
+            if (map.getLayer('route-path')) map.removeLayer('route-path');
+            if (map.getLayer('route-path-outline')) map.removeLayer('route-path-outline');
+            if (map.getSource('route-path-source')) map.removeSource('route-path-source');
+        };
+        
+        console.log('✅ 地图初始化完成 - 路径规划版');
+    </script>
+</body>
+</html>

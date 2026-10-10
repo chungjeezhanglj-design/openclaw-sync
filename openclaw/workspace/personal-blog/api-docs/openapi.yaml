@@ -1,0 +1,1898 @@
+openapi: 3.0.3
+info:
+  title: 博客小时光系统 API
+  description: |
+    博客小时光系统 - 以照片为核心的个人博客平台 API 文档
+    
+    ## 认证说明
+    大部分接口需要 JWT Token 认证，在请求头中添加：
+    ```
+    Authorization: Bearer <your-token>
+    ```
+    
+    ## 响应格式
+    所有接口统一返回格式：
+    ```json
+    {
+      "status": "success|error",
+      "data": {...},
+      "message": "错误消息（可选）"
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: 本地开发环境
+  - url: https://chungjee.cc.cd/api
+    description: 生产环境
+
+tags:
+  - name: 认证 Auth
+    description: 用户注册、登录、退出
+  - name: 用户 User
+    description: 用户资料、设置、社交关系
+  - name: 文章 Post
+    description: 文章 CRUD、点赞、发布
+  - name: 照片 Photo
+    description: 照片上传、AI 分析、管理
+  - name: 评论 Comment
+    description: 评论 CRUD、审核、置顶
+  - name: 标签 Tag
+    description: 标签管理
+  - name: 搜索 Search
+    description: 智能语义搜索
+  - name: 关注 Follow
+    description: 关注/粉丝/好友关系
+  - name: AI 配置 AI
+    description: AI 提示词、提供商配置
+  - name: 行为追踪 Behavior
+    description: 用户行为采集与分析
+  - name: 日志 Logs
+    description: 操作日志、系统日志
+  - name: 监控 Monitoring
+    description: 健康检查、系统状态
+  - name: 设置 Setup
+    description: 系统初始化配置
+
+paths:
+  # ==================== 认证接口 ====================
+  /auth/register:
+    post:
+      tags:
+        - 认证 Auth
+      summary: 邮箱注册
+      description: 使用邮箱、密码和昵称注册新账号
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - nickname
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  minLength: 6
+                  example: password123
+                nickname:
+                  type: string
+                  minLength: 2
+                  maxLength: 50
+                  example: 张三
+      responses:
+        '201':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: 请求参数错误或邮箱已存在
+        '429':
+          description: 请求过于频繁（限流）
+
+  /auth/login:
+    post:
+      tags:
+        - 认证 Auth
+      summary: 邮箱登录
+      description: 使用邮箱和密码登录
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 邮箱或密码错误
+        '429':
+          description: 登录尝试过于频繁
+
+  /auth/logout:
+    post:
+      tags:
+        - 认证 Auth
+      summary: 退出登录
+      description: 清除登录状态
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 退出成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: 张三 已退出登录
+
+  /auth/wechat:
+    get:
+      tags:
+        - 认证 Auth
+      summary: 获取微信授权 URL
+      description: 获取微信扫码登录的授权链接
+      operationId: getWechatAuthUrl
+      parameters:
+        - name: redirectUri
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回微信授权 URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      authUrl:
+                        type: string
+
+  /auth/profile:
+    get:
+      tags:
+        - 认证 Auth
+      summary: 获取个人资料
+      operationId: getProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 返回用户信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+    put:
+      tags:
+        - 认证 Auth
+      summary: 更新个人资料
+      operationId: updateProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+
+  /auth/settings:
+    put:
+      tags:
+        - 认证 Auth
+      summary: 更新用户设置
+      description: 更新显示偏好、AI 配置等
+      operationId: updateSettings
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayTimePreference:
+                  type: string
+                  enum: [createdAt, takenAt]
+                displayOrderPreference:
+                  type: string
+                  enum: [asc, desc]
+                aiPromptPresetId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: 更新成功
+
+  /auth/password:
+    put:
+      tags:
+        - 认证 Auth
+      summary: 修改密码
+      operationId: changePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: 修改成功
+        '400':
+          description: 密码格式错误或当前密码不正确
+
+  # ==================== 文章接口 ====================
+  /posts:
+    get:
+      tags:
+        - 文章 Post
+      summary: 获取文章列表
+      description: 分页获取文章列表，支持多种筛选条件
+      operationId: getPosts
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, published, archived]
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: layout
+          in: query
+          schema:
+            type: string
+            enum: [timeline, grid, masonry, map]
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            default: createdAt
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: userId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 返回文章列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostListResponse'
+    post:
+      tags:
+        - 文章 Post
+      summary: 创建文章
+      operationId: createPost
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  maxLength: 200
+                content:
+                  type: string
+                layoutType:
+                  type: string
+                  enum: [timeline, grid, masonry, map]
+                status:
+                  type: string
+                  enum: [draft, published, archived]
+                visibility:
+                  type: string
+                  enum: [public, friends, followers, private]
+                tagIds:
+                  type: array
+                  items:
+                    type: string
+                photoIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: 创建成功
+
+  /posts/all:
+    get:
+      tags:
+        - 文章 Post
+      summary: 获取所有文章（管理员）
+      operationId: getAllPosts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 返回所有文章
+
+  /posts/user/me:
+    get:
+      tags:
+        - 文章 Post
+      summary: 获取我的文章
+      operationId: getMyPosts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回我的文章列表
+
+  /posts/{id}:
+    get:
+      tags:
+        - 文章 Post
+      summary: 获取文章详情
+      operationId: getPost
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 返回文章详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostDetailResponse'
+    put:
+      tags:
+        - 文章 Post
+      summary: 更新文章
+      operationId: updatePost
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+    delete:
+      tags:
+        - 文章 Post
+      summary: 删除文章
+      operationId: deletePost
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+
+  /posts/{id}/publish:
+    post:
+      tags:
+        - 文章 Post
+      summary: 发布文章
+      operationId: publishPost
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 发布成功
+
+  /posts/{id}/like:
+    post:
+      tags:
+        - 文章 Post
+      summary: 点赞文章
+      operationId: likePost
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 点赞成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  liked:
+                    type: boolean
+                  likeCount:
+                    type: integer
+
+  /posts/{id}/liked:
+    get:
+      tags:
+        - 文章 Post
+      summary: 检查点赞状态
+      operationId: checkLiked
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回点赞状态
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  liked:
+                    type: boolean
+
+  # ==================== 照片接口 ====================
+  /photos/upload:
+    post:
+      tags:
+        - 照片 Photo
+      summary: 上传照片
+      operationId: uploadPhotos
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photos:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                postId:
+                  type: string
+                  format: uuid
+                exifDataList:
+                  type: string
+                  description: JSON 字符串，包含 EXIF 数据数组
+      responses:
+        '201':
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoUploadResponse'
+
+  /photos/{id}/analyze:
+    post:
+      tags:
+        - 照片 Photo
+      summary: AI 分析照片
+      operationId: analyzePhoto
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                  description: 自定义提示词
+                presetId:
+                  type: string
+                  format: uuid
+                  description: 提示词预设 ID
+      responses:
+        '200':
+          description: 分析成功
+
+  /photos/{id}/caption:
+    put:
+      tags:
+        - 照片 Photo
+      summary: 更新照片描述
+      operationId: updateCaption
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - caption
+              properties:
+                caption:
+                  type: string
+      responses:
+        '200':
+          description: 更新成功
+
+  /photos/map:
+    get:
+      tags:
+        - 照片 Photo
+      summary: 获取地图照片
+      description: 获取所有带 GPS 坐标的照片用于地图展示
+      operationId: getPhotosForMap
+      responses:
+        '200':
+          description: 返回地图照片列表
+
+  /photos/{id}:
+    delete:
+      tags:
+        - 照片 Photo
+      summary: 删除照片
+      operationId: deletePhoto
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+
+  # ==================== 评论接口 ====================
+  /comments/post/{postId}:
+    get:
+      tags:
+        - 评论 Comment
+      summary: 获取文章评论
+      operationId: getComments
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回评论列表
+    post:
+      tags:
+        - 评论 Comment
+      summary: 发表评论
+      operationId: createComment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                parentId:
+                  type: string
+                  format: uuid
+                  description: 父评论 ID（回复时使用）
+      responses:
+        '201':
+          description: 发表成功
+
+  /comments/{id}:
+    delete:
+      tags:
+        - 评论 Comment
+      summary: 删除评论
+      operationId: deleteComment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+
+  /comments/{id}/approve:
+    post:
+      tags:
+        - 评论 Comment
+      summary: 批准评论
+      operationId: approveComment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 批准成功
+
+  /comments/{id}/pin:
+    post:
+      tags:
+        - 评论 Comment
+      summary: 置顶评论
+      operationId: pinComment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 置顶成功
+
+  # ==================== 标签接口 ====================
+  /tags:
+    get:
+      tags:
+        - 标签 Tag
+      summary: 获取标签列表
+      operationId: getTags
+      responses:
+        '200':
+          description: 返回标签列表
+    post:
+      tags:
+        - 标签 Tag
+      summary: 创建标签
+      operationId: createTag
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: 创建成功
+
+  # ==================== 搜索接口 ====================
+  /search/parse:
+    post:
+      tags:
+        - 搜索 Search
+      summary: 解析搜索意图
+      description: 使用 AI 解析自然语言搜索请求
+      operationId: parseSearch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  example: 近三年青岛的海滩
+      responses:
+        '200':
+          description: 返回解析的搜索意图
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchIntentResponse'
+
+  /search/photos:
+    post:
+      tags:
+        - 搜索 Search
+      summary: 搜索照片
+      operationId: searchPhotos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: 搜索关键词（与 intent 二选一）
+                intent:
+                  $ref: '#/components/schemas/SearchIntent'
+      responses:
+        '200':
+          description: 返回搜索结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+  # ==================== 用户接口 ====================
+  /users/me:
+    get:
+      tags:
+        - 用户 User
+      summary: 获取当前用户信息
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 返回当前用户信息
+
+  /users/{id}:
+    get:
+      tags:
+        - 用户 User
+      summary: 获取用户信息
+      operationId: getUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回用户信息
+    put:
+      tags:
+        - 用户 User
+      summary: 更新用户信息（管理员）
+      operationId: updateUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+
+  /users/{id}/followers:
+    get:
+      tags:
+        - 用户 User
+      summary: 获取粉丝列表
+      operationId: getFollowers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回粉丝列表
+
+  /users/{id}/following:
+    get:
+      tags:
+        - 用户 User
+      summary: 获取关注列表
+      operationId: getFollowing
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回关注列表
+
+  /users/{id}/friends:
+    get:
+      tags:
+        - 用户 User
+      summary: 获取好友列表
+      operationId: getFriends
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回好友列表
+
+  /users/{id}/follow-status:
+    get:
+      tags:
+        - 用户 User
+      summary: 获取关注状态
+      operationId: getFollowStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回关注状态（是否关注/是否好友）
+
+  /users/{id}/follow-counts:
+    get:
+      tags:
+        - 用户 User
+      summary: 获取关注统计
+      operationId: getUserFollowCounts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回粉丝数、关注数、好友数
+
+  /users/search:
+    get:
+      tags:
+        - 用户 User
+      summary: 搜索用户
+      operationId: searchUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回搜索结果
+
+  # ==================== 关注接口 ====================
+  /follow/{userId}:
+    post:
+      tags:
+        - 关注 Follow
+      summary: 关注用户
+      operationId: followUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 关注成功
+    delete:
+      tags:
+        - 关注 Follow
+      summary: 取消关注
+      operationId: unfollowUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取消成功
+
+  # ==================== AI 配置接口 ====================
+  /ai-prompts/presets:
+    get:
+      tags:
+        - AI 配置 AI
+      summary: 获取提示词列表
+      operationId: getPresets
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 返回提示词列表
+    post:
+      tags:
+        - AI 配置 AI
+      summary: 创建提示词
+      operationId: createPreset
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - prompt
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                description:
+                  type: string
+                prompt:
+                  type: string
+      responses:
+        '201':
+          description: 创建成功
+
+  /ai-prompts/presets/{id}:
+    get:
+      tags:
+        - AI 配置 AI
+      summary: 获取提示词详情
+      operationId: getPreset
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回提示词详情
+    put:
+      tags:
+        - AI 配置 AI
+      summary: 更新提示词
+      operationId: updatePreset
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                prompt:
+                  type: string
+      responses:
+        '200':
+          description: 更新成功
+    delete:
+      tags:
+        - AI 配置 AI
+      summary: 删除提示词
+      operationId: deletePreset
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+
+  /ai-prompts/presets/{id}/set-default:
+    post:
+      tags:
+        - AI 配置 AI
+      summary: 设为默认提示词
+      operationId: setDefaultPreset
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 设置成功
+
+  /ai-prompts/ai-config:
+    get:
+      tags:
+        - AI 配置 AI
+      summary: 获取 AI 配置
+      operationId: getAiConfig
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 返回 AI 配置
+    put:
+      tags:
+        - AI 配置 AI
+      summary: 更新 AI 配置
+      operationId: updateAiConfig
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                aiProvider:
+                  type: string
+                  enum: [ollama, tongyi, minimax, moonshot]
+                ollamaBaseUrl:
+                  type: string
+                ollamaModel:
+                  type: string
+                customApiUrl:
+                  type: string
+                customApiModel:
+                  type: string
+      responses:
+        '200':
+          description: 更新成功
+
+  /ai-prompts/ollama-models:
+    get:
+      tags:
+        - AI 配置 AI
+      summary: 获取 Ollama 模型列表
+      operationId: getOllamaModels
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 返回模型列表
+
+  # ==================== 行为追踪接口 ====================
+  /behavior/track:
+    post:
+      tags:
+        - 行为追踪 Behavior
+      summary: 上报行为数据
+      operationId: trackBehavior
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BehaviorTrackRequest'
+      responses:
+        '200':
+          description: 上报成功
+
+  /behavior/config:
+    get:
+      tags:
+        - 行为追踪 Behavior
+      summary: 获取行为配置
+      operationId: getBehaviorConfig
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 返回行为配置
+    put:
+      tags:
+        - 行为追踪 Behavior
+      summary: 更新行为配置
+      operationId: updateBehaviorConfig
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gpsTolerance:
+                  type: number
+                trackEnabled:
+                  type: boolean
+      responses:
+        '200':
+          description: 更新成功
+
+  /behavior/stats:
+    get:
+      tags:
+        - 行为追踪 Behavior
+      summary: 行为统计
+      operationId: getBehaviorStats
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 返回统计数据
+
+  /behavior/article/{articleId}:
+    get:
+      tags:
+        - 行为追踪 Behavior
+      summary: 文章行为分析
+      operationId: getArticleBehavior
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: articleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回文章行为数据
+
+  /behavior/user/{userId}:
+    get:
+      tags:
+        - 行为追踪 Behavior
+      summary: 用户行为分析
+      operationId: getUserBehavior
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回用户行为数据
+
+  # ==================== 日志接口 ====================
+  /logs/operations:
+    get:
+      tags:
+        - 日志 Logs
+      summary: 获取操作日志
+      operationId: getOperationLogs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回操作日志列表
+
+  /logs/clear/preview:
+    get:
+      tags:
+        - 日志 Logs
+      summary: 预览日志清理
+      operationId: previewClearLogs
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 返回可清理的日志数量
+
+  /logs/clear:
+    delete:
+      tags:
+        - 日志 Logs
+      summary: 清理日志
+      operationId: clearLogs
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                days:
+                  type: integer
+                  description: 清理多少天前的日志
+      responses:
+        '200':
+          description: 清理成功
+
+  /logs/convert-gps:
+    post:
+      tags:
+        - 日志 Logs
+      summary: GPS 转地名
+      description: 批量将 GPS 坐标转换为地理位置名称
+      operationId: convertGPSAddresses
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 转换成功
+
+  /logs/stream:
+    get:
+      tags:
+        - 日志 Logs
+      summary: 日志流（SSE）
+      operationId: logStream
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: SSE 实时日志流
+
+  /logs/ip-stats:
+    get:
+      tags:
+        - 日志 Logs
+      summary: IP 统计
+      operationId: getIPStatsHandler
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 返回 IP 统计数据
+
+  /logs/clear-cache:
+    post:
+      tags:
+        - 日志 Logs
+      summary: 清理缓存
+      operationId: clearCacheHandler
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 清理成功
+
+  # ==================== 监控接口 ====================
+  /monitoring/health:
+    get:
+      tags:
+        - 监控 Monitoring
+      summary: 健康检查
+      operationId: healthCheck
+      responses:
+        '200':
+          description: 服务正常
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+
+  /monitoring/system/status:
+    get:
+      tags:
+        - 监控 Monitoring
+      summary: 系统状态检查
+      operationId: systemStatus
+      responses:
+        '200':
+          description: 返回系统状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatusResponse'
+
+  # ==================== 设置接口 ====================
+  /setup/config:
+    get:
+      tags:
+        - 设置 Setup
+      summary: 获取设置配置
+      operationId: getClientConfig
+      responses:
+        '200':
+          description: 返回客户端配置
+
+  /setup/configure:
+    post:
+      tags:
+        - 设置 Setup
+      summary: 执行系统设置
+      description: 首次启动时配置数据库和管理员账号
+      operationId: configureSystem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dbHost
+                - dbDatabase
+                - dbUsername
+                - dbPassword
+                - adminEmail
+                - adminPassword
+              properties:
+                dbHost:
+                  type: string
+                dbPort:
+                  type: integer
+                dbDatabase:
+                  type: string
+                dbUsername:
+                  type: string
+                dbPassword:
+                  type: string
+                adminEmail:
+                  type: string
+                adminPassword:
+                  type: string
+      responses:
+        '200':
+          description: 配置成功
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Token，格式：Bearer <token>
+
+  schemas:
+    # ==================== 通用响应 ====================
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+
+    # ==================== 认证相关 ====================
+    AuthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+            isAdmin:
+              type: boolean
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        nickname:
+          type: string
+        avatar:
+          type: string
+        bio:
+          type: string
+        role:
+          type: string
+          enum: [user, editor, admin]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    UserProfileResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+        avatar:
+          type: string
+        bio:
+          type: string
+        phone:
+          type: string
+        location:
+          type: string
+        website:
+          type: string
+        gender:
+          type: string
+        birthday:
+          type: string
+          format: date
+
+    # ==================== 文章相关 ====================
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        layoutType:
+          type: string
+          enum: [timeline, grid, masonry, map]
+        status:
+          type: string
+          enum: [draft, published, archived]
+        visibility:
+          type: string
+          enum: [public, friends, followers, private]
+        viewCount:
+          type: integer
+        likeCount:
+          type: integer
+        commentCount:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Photo'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+
+    PostListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            posts:
+              type: array
+              items:
+                $ref: '#/components/schemas/Post'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    PostDetailResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            post:
+              $ref: '#/components/schemas/Post'
+
+    PostUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        layoutType:
+          type: string
+        status:
+          type: string
+        visibility:
+          type: string
+        tagIds:
+          type: array
+          items:
+            type: string
+
+    # ==================== 照片相关 ====================
+    Photo:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        caption:
+          type: string
+        aiTitle:
+          type: string
+        aiTags:
+          type: array
+          items:
+            type: string
+        gpsLat:
+          type: number
+        gpsLng:
+          type: number
+        locationName:
+          type: string
+        takenAt:
+          type: string
+        deviceName:
+          type: string
+        deviceMake:
+          type: string
+        deviceModel:
+          type: string
+        exposureTime:
+          type: string
+        fNumber:
+          type: number
+        isoSpeed:
+          type: integer
+        focalLength:
+          type: number
+
+    PhotoUploadResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            photos:
+              type: array
+              items:
+                $ref: '#/components/schemas/Photo'
+
+    # ==================== 标签相关 ====================
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        postCount:
+          type: integer
+
+    # ==================== 评论相关 ====================
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+        pinned:
+          type: boolean
+        approved:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/User'
+        replies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+
+    # ==================== 搜索相关 ====================
+    SearchIntent:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        location:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+
+    SearchIntentResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            intent:
+              $ref: '#/components/schemas/SearchIntent'
+
+    SearchResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            photos:
+              type: array
+              items:
+                $ref: '#/components/schemas/Photo'
+
+    # ==================== 分页 ====================
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    # ==================== 行为追踪 ====================
+    BehaviorTrackRequest:
+      type: object
+      properties:
+        eventType:
+          type: string
+          enum: [page_view, article_view, scroll, click, resize]
+        pageUrl:
+          type: string
+        pageType:
+          type: string
+        articleId:
+          type: string
+        scrollDepth:
+          type: number
+        stayDuration:
+          type: integer
+        clickTarget:
+          type: string
+        userAgent:
+          type: string
+        screenResolution:
+          type: string
+        viewportSize:
+          type: string
+        gpsLat:
+          type: number
+        gpsLng:
+          type: number
+
+    # ==================== 系统状态 ====================
+    SystemStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            dbConfigured:
+              type: boolean
+            dbConnected:
+              type: boolean
+            dbInitialized:
+              type: boolean
+            hasUsers:
+              type: boolean
+            setupComplete:
+              type: boolean
+            adminEmail:
+              type: string

@@ -1,0 +1,63 @@
+#!/bin/bash
+# sherpa-onnx-tts Local CLI wrapper for OpenClaw TTS
+# Supports Chinese VITS models with lexicon
+
+RUNTIME_DIR="${SHERPA_ONNX_RUNTIME_DIR:-$HOME/.openclaw/tools/sherpa-onnx-tts/runtime}"
+MODEL_DIR="${SHERPA_ONNX_MODEL_DIR:-$HOME/.openclaw/tools/sherpa-onnx-tts/models/vits-zh-aishell3/vits-zh-aishell3}"
+OUTPUT=""
+
+# Parse only -o/--output flags, rest is text
+REMAINING=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -o|--output)
+      OUTPUT="$2"; shift 2 ;;
+    *)
+      REMAINING+=("$1"); shift ;;
+  esac
+done
+
+BIN="$RUNTIME_DIR/bin/sherpa-onnx-offline-tts"
+[[ ! -x "$BIN" ]] && echo "Binary not found: $BIN" && exit 1
+
+# Auto-detect model file (prefer non-int8)
+if [[ -f "$MODEL_DIR/vits-aishell3.onnx" ]]; then
+  MODEL_FILE="$MODEL_DIR/vits-aishell3.onnx"
+elif [[ -f "$MODEL_DIR/vits-aishell3.int8.onnx" ]]; then
+  MODEL_FILE="$MODEL_DIR/vits-aishell3.int8.onnx"
+else
+  echo "Model file not found in $MODEL_DIR"
+  exit 1
+fi
+
+TOKENS_FILE="$MODEL_DIR/tokens.txt"
+[[ ! -f "$TOKENS_FILE" ]] && echo "Tokens file not found: $TOKENS_FILE" && exit 1
+
+LEXICON_FILE="$MODEL_DIR/lexicon.txt"
+[[ ! -f "$LEXICON_FILE" ]] && echo "Lexicon file not found: $LEXICON_FILE" && exit 1
+
+# Join remaining args as text
+TEXT="${REMAINING[*]}"
+
+# If text is empty, read from stdin
+if [[ -z "$TEXT" ]]; then
+  TEXT=$(cat)
+fi
+
+[[ -z "$TEXT" ]] && echo "No text provided" && exit 1
+
+# Output file
+if [[ -z "$OUTPUT" ]]; then
+  OUTPUT=$(mktemp /tmp/sherpa_tts_XXXXXX.wav)
+fi
+
+export DYLD_LIBRARY_PATH="$RUNTIME_DIR/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+
+"$BIN" \
+  --vits-model="$MODEL_FILE" \
+  --vits-tokens="$TOKENS_FILE" \
+  --vits-lexicon="$LEXICON_FILE" \
+  --output-filename="$OUTPUT" \
+  "$TEXT"
+
+echo "$OUTPUT"

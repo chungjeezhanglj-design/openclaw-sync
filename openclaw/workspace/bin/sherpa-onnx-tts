@@ -1,0 +1,53 @@
+#!/bin/bash
+# Custom sherpa-onnx-tts wrapper - supports --vits-lexicon for vits-zh-aishell3
+
+RUNTIME_DIR="${SHERPA_ONNX_RUNTIME_DIR:-}"
+MODEL_DIR="${SHERPA_ONNX_MODEL_DIR:-}"
+MODEL_FILE="${SHERPA_ONNX_MODEL_FILE:-}"
+TOKENS_FILE="${SHERPA_ONNX_TOKENS_FILE:-}"
+LEXICON_FILE="${SHERPA_ONNX_LEXICON_FILE:-}"
+OUTPUT="tts.wav"
+TEXT=""
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --runtime-dir)
+      RUNTIME_DIR="$2"; shift 2 ;;
+    --model-dir)
+      MODEL_DIR="$2"; shift 2 ;;
+    --model-file)
+      MODEL_FILE="$2"; shift 2 ;;
+    --tokens-file)
+      TOKENS_FILE="$2"; shift 2 ;;
+    --lexicon-file)
+      LEXICON_FILE="$2"; shift 2 ;;
+    -o|--output)
+      OUTPUT="$2"; shift 2 ;;
+    *)
+      TEXT="$*"; break ;;
+  esac
+done
+
+[[ -z "$RUNTIME_DIR" ]] && echo "Error: SHERPA_ONNX_RUNTIME_DIR not set" && exit 1
+[[ -z "$MODEL_DIR" ]] && echo "Error: SHERPA_ONNX_MODEL_DIR not set" && exit 1
+
+BIN="$RUNTIME_DIR/bin/sherpa-onnx-offline-tts"
+[[ ! -x "$BIN" ]] && echo "Binary not found: $BIN" && exit 1
+
+# Auto-detect model file
+if [[ -z "$MODEL_FILE" ]]; then
+  candidates=("$MODEL_DIR"/*.onnx)
+  MODEL_FILE="${candidates[0]}"
+fi
+
+# Auto-detect tokens file
+if [[ -z "$TOKENS_FILE" && -f "$MODEL_DIR/tokens.txt" ]]; then
+  TOKENS_FILE="$MODEL_DIR/tokens.txt"
+fi
+
+ARGS=(--vits-model="$MODEL_FILE" --vits-tokens="$TOKENS_FILE")
+[[ -n "$LEXICON_FILE" ]] && ARGS+=(--vits-lexicon="$LEXICON_FILE")
+ARGS+=(--output-filename="$OUTPUT" "$TEXT")
+
+export DYLD_LIBRARY_PATH="$RUNTIME_DIR/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+exec "$BIN" "${ARGS[@]}"

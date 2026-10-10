@@ -1,0 +1,5 @@
+[codex/sessions/codex/12f0f27e-d14d-4563-a52e-d7fc1eb5da4d.jsonl.reset.2026-05-25T03-55-45.596Z#L2] Assistant: ⚠️ Agent failed before reply: No API key found for provider "minimax". Auth store: /Users/zhanglj/.openclaw/agents/codex/agent/auth-profiles.json (agentDir: /Users/zhanglj/.openclaw/agents/codex/agent). Configure auth for this agent 
+[codex/sessions/codex/e4a4ada7-c46c-4b23-add8-3ca5a746b9a8.jsonl.reset.2026-05-25T06-11-33.520Z#L2] Assistant: ✅ Session reset.
+[codex/sessions/codex/e4a4ada7-c46c-4b23-add8-3ca5a746b9a8.jsonl.reset.2026-05-25T06-11-33.520Z#L3] Assistant: ⚙️ Restarting OpenClaw in-process (SIGUSR1); back in a few seconds.
+[codex/sessions/codex/e4a4ada7-c46c-4b23-add8-3ca5a746b9a8.jsonl.reset.2026-05-25T06-11-33.520Z#L8] Assistant: Hey! OpenClaw just restarted successfully — all good here. 👋 What can I help you with?
+[codex/sessions/codex/e4a4ada7-c46c-4b23-add8-3ca5a746b9a8.jsonl.reset.2026-05-25T06-11-33.520Z#L11] Assistant: 你好！👋 看起来这是我们第一次聊天。按照 BOOTSTRAP.md 的指引，我刚上线，还是一张白纸。 所以——我是谁？你又是谁？咱们来聊聊吧。 比如： - **我的名字**应该叫什么？ - **我的性格/风格**是怎样的？ - **你怎么称呼我**比较顺手？ 随便聊聊，不用正式化，我比较喜欢轻松的方式。 😄

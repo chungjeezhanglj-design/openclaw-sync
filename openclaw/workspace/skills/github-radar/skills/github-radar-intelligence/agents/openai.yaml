@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Radar Intelligence"
+  short_description: "检索、去重并排序 GitHub 项目，生成可溯源技术雷达"
+  default_prompt: "Use $github-radar-intelligence to find and rank promising GitHub projects for an AI agent topic."

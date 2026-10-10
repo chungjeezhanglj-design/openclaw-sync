@@ -1,0 +1,32 @@
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L5] User: 你记忆中的华矿机是什么意思
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L6] Assistant: 让我先翻一下记忆，确认我没有遗漏。
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L12] Assistant: 翻了一遍 `MEMORY.md` / `TOOLS.md` / 日报，能拼出来的就这些： ## 我对"华矿机"的全部已知 | 维度 | 我存的 | |------|-------| | **类型** | 你的服务器别名（不是云端，是本地局域网） | | **IP** | `192.168.1.111` | | **跑什么** | Ollama + TTS API | | **Ollama 模型** | 视觉默认 `openbmb/minicpm-v4.5:8b`，备选 `llama3.2-vision:latest` | |
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L12] Assistant: `TOOLS.md` 华矿机那一块 2. **我 SSH 上去跑 `system_profiler` / `lshw` / `ollama show` 把硬件和 hostname 自己摸清**（不需要你打字） 走哪条？
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L13] User: 你测试一下华矿机有哪些模型
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L28] Assistant: 测试完了。**华矿机 Ollama 完全在线**（v0.32.5），但 **TTS API 这次没响应**。 ## Ollama 模型清单（4 个） | # | 模型 | 来源 | 参数 | 量化 | 上下文 | 能力 | 备注 | |---|------|------|------|------|--------|------|------| | 1 | `openbmb/minicpm-o4.5:latest` | OpenBMB MiniCPM-o 4.5 | 8.2B | Q4_K_M | 40k | complet
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L28] Assistant: o4.5**（o = omni，多模态升级版）。文档落后了一个版本，要不要更新？ 2. **没你说的 `llama3.2-vision:latest` 备选** — 备选模型**根本没装**。视觉这条路现在只有 MiniCPM-o4.5 和 qwen3.5:9b 两个能选。 3. **有一个 `kimi-k2.6:cloud`** — 1T 参数 Kimi K2.6 走云端代理（`remote_model=kimi-k2.6`, `remote_host=ollama.com:443`）。这条本来在 MEMORY 关注项目表
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L28] Assistant: API 路径 要不要我 SSH 上去 `lsof -i:8000` / `ps aux | grep tts` 摸一下？还是你自己顺路看一眼？
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L29] User: 1.需要更新；2.备选也更新
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L37] Assistant: 还漏了一处——MEMORY.md 工作流约定里也有一行旧名字：
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L41] Assistant: 改完了，三处全部一致： | 位置 | 状态 | |------|------| | `TOOLS.md` 图像识别 · 默认模型 | ✅ `openbmb/minicpm-v4.5:8b` → `openbmb/minicpm-o4.5:latest` | | `TOOLS.md` 图像识别 · 备选模型 | ✅ `llama3.2-vision:latest` → `qwen3.5:9b` | | `MEMORY.md` 基础设施 · 华矿机 | ✅ 整个 Ollama 段重组（4 个模型全列） | | `MEMORY.m
+[main/sessions/main/98ace05c-fb4a-4ec0-8d64-ed623eef5fc3.jsonl#L41] Assistant: 全量的备用……但 1T 模型对 192.168.1.111 这台机器（如果是矿机改造）压力会很大，先放着 或者要不要我帮你**写一份 `memory/2026-07-31.md` 日报**？今天发现的这些细节（4 模型清单 + TTS 故障 + 名字修正）值得留个档。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L5] User: GeoLibre的GitHub开源地址：https://github.com/opengeos/GeoLibre
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L6] Assistant: 收到，opengeos/GeoLibre，OpenClaw workspace 里查一下。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L8] Assistant: <https://github.com/opengeos/GeoLibre|GeoLibre> — OpenGeos（吴秋生教授）的开源 GIS 平台。 TL;DR: 轻量、云原生 GIS，能在浏览器/桌面/Android/Jupyter 同一个代码库里跑通，数据全程本地、零上传。 技术栈： Tauri v2 + React + TS + MapLibre GL JS + DuckDB-WASM Spatial + deck.gl 亮点： 1. 一个 workspace = 4 个平台：浏览器原生 / macOS·Win·Li
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L8] Assistant: **MapLibre** 开源栈，无供应商锁定 加 MEMORY 关注项目表吗？ 1 加 2 不加
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L9] User: 开源地址：https://github.com/crynta/terax-ai
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L10] Assistant: 收到，crynta/terax-ai。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L12] Assistant: <https://github.com/crynta/terax-ai|Terax AI> — crynta 出品，7-8MB 的终端优先 AI-native 开发工作台。 TL;DR: 超轻量（VS Code 几百 MB，Terax 只 7-8MB）的开源 ADE（AI Dev Environment）。Tauri 2 + Rust 后端 + WebGL 终端，自带 AI 侧边面板、代码编辑器、git graph、web 预览。无遥测、无账号。 技术栈: Tauri 2 + Rust + portable-pty + Re
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L12] Assistant: commit graph**（lane rendering 处理 merge / branch） 6. 10 个内置主题、可在 app 内自定义主题 7. 安全细节到位：API key 走 OS keychain，不落盘 8. 多平台发布：AUR (yay -S terax-bin) / NixOS flake / AppImage / .deb / .rpm 9. Apache-2.0 关联项目 / 对你的价值: - **完美对接华矿机**：明确支持 Ollama + OpenAI-compatible 端点——可以直接把
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L14] Assistant: 收到，加 Terax AI 进 MEMORY。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L16] Assistant: ✅ Terax AI 已加进 MEMORY 关注项目表（最后更新日期 + 表内第 12 行）。 顺便提醒：今早 7:24 的 GeoLibre 你还没拍板，要补加的话回 "1"，跳过的话回 "2" 就行。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L17] User: 视频中提到的开源项目地址是：https://github.com/cclank/lanshu-animated-architecture-diagram
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L18] Assistant: 收到，cclank/lanshu-animated-architecture-diagram。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L20] Assistant: 超时了，重试一下。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L24] Assistant: web_fetch 一直超时，换 curl 试试。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L32] Assistant: GitHub 整个页面超时，换 API 试试。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L34] Assistant: GitHub API 通了，拿到描述：**"Premium hand-drawn animated architecture diagram Codex skill"**。让我读 README。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L38] Assistant: README 返回空，先列一下仓库结构。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L44] Assistant: API 之前能通，换 API 拿 README 内容。
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L46] Assistant: <https://github.com/cclank/lanshu-animated-architecture-diagram|岚叔动态架构图> — cclank 出品，Codex skill + 本地 Python 渲染器（821 ⭐，MIT）。 TL;DR: 手绘风格的"动态架构图"生成器——一个 JSON spec 一把出三件套：可编辑的 Excalidraw + 静态 PNG + 真正动起来的 GIF（移动光点 / 脉冲模块 / 胶片颗粒 / 暗角）。纯本地 Pillow 渲染，不依赖 Excalidraw / 浏览
+[main/sessions/main/c4cf4ab2-02a3-4275-89df-f906c9990f6d.jsonl#L46] Assistant: 输出的固定布局模板，适配系统架构 / 流程图 / 写文章 关联项目 / 对你的价值: - **公众号写作那条线**：跟 khazix-skills 同一族群——给技术写作者提供"图说"素材生产工具，比手画或 Figma 截图快得多 - **OpenClaw skill_workshop 平行**：这是个 Codex skill（`SKILL.md` + `references/` + `assets/` + `scripts/`），结构跟 OpenClaw 的 skill 概念几乎一一对应，可作 Codex 生态参考 - *

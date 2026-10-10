@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "skills": {
+    "moss-tts-voice": {
+      "version": "1.2.2",
+      "installedAt": 1777980656111
+    }
+  }
+}

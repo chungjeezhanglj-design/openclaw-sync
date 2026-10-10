@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:10-alpine
+    container_name: blog-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: personal_blog
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - blog-network
+
+  backend:
+    build: ./backend
+    container_name: blog-backend
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - DB_DATABASE=personal_blog
+      - JWT_SECRET=your-production-jwt-secret
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - mariadb
+    networks:
+      - blog-network
+
+  frontend:
+    build: ./frontend
+    container_name: blog-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - blog-network
+
+volumes:
+  mariadb_data:
+
+networks:
+  blog-network:
+    driver: bridge
