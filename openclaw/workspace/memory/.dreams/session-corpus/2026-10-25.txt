@@ -1,0 +1,10 @@
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1373] User: 研究 GitHub 上的 R2TU3AA/cn-math-taxonomy项目
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1378] Assistant: 仓库直接访问不到，先定位一下。
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1382] Assistant: `R2TU3AA` 这个用户不存在（404），仓库名却对得上。真正的是 `xiaoyang111222/cn-math-taxonomy`（3588 star），而且有一堆同名 fork。开始扒。
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1436] Assistant: 克隆完成了，仓库已在本地。开始跑数据验证。
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1448] Assistant: 测试有 1 项失败。查一下是不是断言过期。
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1468] Assistant: 研究完了。先说一件重要的事： **`R2TU3AA/cn-math-taxonomy` 这个路径不存在** — GitHub 上用户 `R2TU3AA` 本身就没有（API 404），仓库名却对得上。真正的上游是 `xiaoyang111222/cn-math-taxonomy`，3593 star / 873 fork，2026-10-18 建的，7 天涨到 3600 star。`cn-math-taxonomy` 这个名字下面有十几个同名 fork（APK 打包版、LazyCat LPK 版、演示站版等），你大概率是看到了其中之
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1468] Assistant: 2403 边 / 6723 题」已经过期**，作者改数据没同步改描述。 **质量实测** 官方 `scripts/validate.py` → VALIDATION PASSED。我自己写的图完整性检查也全过：悬空边 0、自环 0、重复边 0、**环 0**、完全孤立点 0、年级逆序边 0、10 个根节点、平均先修数 1.55。 `node tests/test_engine.js` → 88 passed, 1 failed。这个失败**不是数据 bug，是断言过期**：测试期望小学 242 个点，实际 241，因为 10-25 
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1468] Assistant: 这个设计的克制程度明显高于一般 AI 生成项目。 **三个要留意的点** 1. **商业化痕迹明显**。`assets/stats-config.js` 里硬编码了 `https://math-pansgo-stats.xiaokunfeng310.workers.dev/collect`，默认开着 sendBeacon 上报访问事件（只报事件名/路径/来源，不含孩子昵称和答题内容，README 里也说了）。顶部横幅链到 `test.pansgo.com`「儿童智商测试」，另有微信收款码。README 里「赞助维护」按钮还一度被改成
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1468] Assistant: 需要我做什么？比如：给某个学科做深度抽样核对（把题目和课标逐条比对找错）、试着本地跑起来体验一下、或者评估能不能 fork 成你自己的版本。
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1469] User: [OpenClaw exec completion] Disable automatic completion turns with tools.exec.notifyOnExit=false; check per-agent overrides. Background exec and process poll remain available.

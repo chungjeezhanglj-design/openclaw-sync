@@ -281,6 +281,21 @@ NEW_PWD=$(cat /tmp/newpwd.txt)
 
 证据：2026-09-15 personal-blog DB 密码轮换 — 连踩两次才换稳妥写法。
 
+### 📦 GitHub 大文件抓取
+
+**优先级**：`api.github.com` 的 trees/blobs API > `git clone` > `raw.githubusercontent.com`。
+本机 raw.githubusercontent 拉 1.9MB 会超时（curl exit 28, http=000, size=0），api.github.com 的 blob/tree API 正常。
+
+**校验代替重下**：`git hash-object <file>` 的 sha == GitHub tree 里该路径的 blob sha → 证明本地文件与上游字节一致，省流量也省时间。全树比对脚本：
+
+```bash
+curl -sS --max-time 45 "https://api.github.com/repos/<owner>/<repo>/git/trees/main?recursive=1" -o tree.json
+cd <local_clone> && git ls-tree -r HEAD --format='%(objectname) %(path)' > local_tree.txt
+# 按 path 对比两侧 sha，diffs=0 即完全一致
+```
+
+证据：2026-10-25 cn-math-taxonomy — 316/316 blob sha 一致，0 差异。
+
 ### ✏️ Edit 工具 — 大行匹配踩坑
 
 `edit` 的 `oldText` 必须**字节级精确**。失败时的快速诊断：

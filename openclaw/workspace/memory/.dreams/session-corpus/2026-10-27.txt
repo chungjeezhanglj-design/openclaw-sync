@@ -1,0 +1,24 @@
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L6] Assistant: I'll start by auditing the Skill Workshop directory structure completely before making any changes.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L10] Assistant: Seven skills. Let me read all of them completely.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L21] Assistant: Now let me check the supporting script and the directory's context.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L25] Assistant: Let me check the wider context to understand how this workshop relates to the live skills library.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L36] Assistant: Now let me check a few facts before deciding on structure: whether there's an established pipeline, trash tooling, and whether the "Synology Chat" reference is still current.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L47] Assistant: Strong evidence found. Let me verify the MEMORY.md table format the record skill targets, and confirm the graph-integrity script's provenance.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L51] Assistant: Let me verify the MEMORY table tail and daily-file conventions before I restructure.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L60] Assistant: Audit complete. I have the evidence I need. Here's my assessment before editing: **Collection:** 7 skills → 9 after restructuring (2 splits + 1 shared prerequisite), 1 retired. Key findings: - `github-project-research/scripts/graph_integrity.py` is an **orphan** — writ
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L65] Assistant: Now the record skill — it gets the shared resolution reference plus MEMORY.md's actual row convention.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L68] Assistant: Now the research skill — it gets the orphan script wired in plus the clone-and-validate branch that the cn-math-taxonomy research actually used.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L71] Assistant: Continuing. Now the gh-sync skill — moving the bootstrap script into a supporting file and folding the duplicated gotchas into the steps that need them.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L77] Assistant: Now the Click skill — its "Complete template" block repeats code already shown in the three patterns.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L80] Assistant: Now the memory-embedding skill — two of its six gotchas restate steps 3 and 4. I'll fold the one extra detail into the step and trim the restatements.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L89] Assistant: Now a small accuracy fix in the vitest skill — its comment implies source order controls the polyfill timing.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L92] Assistant: Retiring the superseded combined skill (using `trash` so it stays recoverable):
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L95] Assistant: Now a full verification pass across the collection.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L99] Assistant: Let me functionally test the integrity checker with a fixture matching the documented invocation, and verify the split preserved every fact.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L106] Assistant: Trash is TCC-protected from this shell (macOS restriction) — the directory is gone from the collection and recoverable in Trash. Let me verify every fact from the retired file survived the split.
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L109] Assistant: Three flags are grep artifacts (leading `-` parsed as options, plus case). Re-checking properly:
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L112] Assistant: All facts preserved — those were grep parsing artifacts. Final structural review across the collection:
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L119] Assistant: Two issues from my verification step: my orphan check used the wrong path, and `py_compile` left a `__pycache__` artifact in the collection. Fixing both:
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L122] Assistant: Final integrity check on the rendered output (balanced code fences, readable structure):
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L130] Assistant: One last clarity fix — making the script path unambiguous relative to the skill directory:
+[main/sessions/main/c0a05f13-46fe-41d6-9556-0800edc0e505#L136] Assistant: Review complete. Here's what I found and changed. ## Collection: 7 → 9 skills (1 retired) **Audit method:** listed every directory completely, read all 7 SKILL.md files and the one supporting script, then cross-checked against real evidence — MEMORY.md's 44-row project

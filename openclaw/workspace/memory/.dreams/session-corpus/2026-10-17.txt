@@ -1,0 +1,3 @@
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1368] User: VoxWeft 是一个跑在 Apple Silicon 本地的开源同声传译系统，核心特点：基于 VoxCPM2 的 MLX 实现，端到端首段延迟约 170 毫秒，支持 30 种语言语音生成，还能用约 5 秒参考音频克隆目标声线，所有语音处理都在设备上完成，强调隐私和离线能力。项目地址可以在 GitHub 搜索 HenryZ838978/VoxWeft 找到。
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1369] Assistant: 收到，VoxWeft 信息已记下。
+[main/sessions/main/71a3a4aa-e084-4075-97a9-7b62d7712633#L1372] Assistant: 记下了。 170 ms 首段延迟 + 5 秒声线克隆 + 离线全本地 — 这套对实时同传是真能用的级别（很多方案卡在 500 ms 以上就废了）。 要我现在做什么？常见几条路： 1. **clone 仓库看一眼** — 看看模型权重多大、依赖是不是真的能跑、MLX 那部分是不是按预期工作 2. **和现有方案横评** — 对比 SeamlessM4T / Whisper+CosyVoice / 你的华矿机 TTS 链路，定位它在你工作流里的位置 3. **搭个 demo 试跑** — 给一段中英音频看实际效果 或者你心里已经有具体目
